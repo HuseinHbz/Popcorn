@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+
+/*
+ * Phase 0 seed of the design tokens (project plan §4, "Sumi & Washi").
+ * Phase 1 replaces this block with tokens generated from tokens.json.
+ * The default Tailwind palette is disabled so only brand tokens exist.
+ */
+@theme {
+  --color-*: initial;
+  --color-ink: #121212;
+  --color-washi: #f4efe6;
+  --color-stone: #5e5850;
+  --color-ash: #9a938a;
+  --color-kin: #b8a07a;
+  --color-shu: #a8322a;
+}
+
+/* Font families come from next/font (src/shared/ui/fonts), exposed as CSS variables. */
+@theme inline {
+  --font-sans: var(--font-vazirmatn-latin), var(--font-vazirmatn-arabic), system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
