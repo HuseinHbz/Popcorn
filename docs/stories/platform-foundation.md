@@ -27,7 +27,7 @@ so that every later phase starts from green gates instead of setting them up ad 
 
 ## Out of scope
 
-- Nonce-based CSP without `'unsafe-inline'` — needs dynamic rendering trade-off; decided with auth in Phase 2.
+- Nonce-based CSP without `'unsafe-inline'` — needs the dynamic-rendering trade-off; decided with auth in Phase 2 and tracked in `docs/security/risk-register.md`.
 - Design tokens pipeline (`tokens.json` → Tailwind), Peyda and Shippori Mincho — Phase 1.
 - `formatToman()` / `formatJalali()`, env validation, database schema — Phase 2, where they are first used.
 - Production Dockerfile, Nginx and deployment — Phase 5.
