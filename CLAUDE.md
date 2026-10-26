@@ -4,9 +4,11 @@ Website + admin platform for Popcorn Group: **Nakaya** and **em. café** (Elahie
 Full spec: `docs/project-plan.md`. Decisions: `docs/adr/`. Read both before any change.
 
 ## Stack
+
 Next.js App Router · TypeScript strict · Tailwind · Drizzle · PostgreSQL · Redis/BullMQ · next-intl · Zod · Better Auth · Vitest · Playwright · Docker (self-hosted in Iran)
 
 ## Domain facts (do not re-decide)
+
 - 3 brands (`brands`): nakaya, em-cafe, izakaya. 2 branches: Elahieh (nakaya + em-cafe, separate menus), Kish (izakaya).
 - Staff (`staff_users`, password + RBAC) and customers (`customers`, SMS OTP) are separate entities.
 - Orders are mostly entered by waiters. QR mode per branch/table: `menu_only` | `order`; both have "call waiter".
@@ -17,6 +19,7 @@ Next.js App Router · TypeScript strict · Tailwind · Drizzle · PostgreSQL · 
 - Existing logos/brand identities are kept. Headline font: Peyda (licensed); body: Vazirmatn; Latin display: Shippori Mincho. All self-hosted.
 
 ## Non-negotiables
+
 - No `any`, no `@ts-ignore`, no `eslint-disable` without an ADR link.
 - Money is BIGINT in IRR. Never float. Display in Toman via `formatToman()`.
 - Time is `timestamptz` UTC. Display via `formatJalali()` in Asia/Tehran.
@@ -31,6 +34,7 @@ Next.js App Router · TypeScript strict · Tailwind · Drizzle · PostgreSQL · 
 - Booking overlap is enforced by a PostgreSQL `EXCLUDE USING gist` constraint, not only app code.
 
 ## Layout
+
 ```
 src/app/[locale]/(site)        public site
 src/app/[locale]/(admin)/admin admin panel
@@ -38,9 +42,11 @@ src/app/t/[qrToken]            table QR
 src/modules/<name>/{domain,server,ui,schema.ts}
 src/shared/{ui,lib,auth,i18n,config}
 ```
+
 Dependency rule: `app` → `modules/*/server` → `modules/*/domain`.
 
 ## Workflow
+
 1. Read the story in `docs/stories/` and related ADRs.
 2. Plan mode first for any change touching more than 2 files (use the `architect` agent).
 3. Write domain tests first. Then implement. Then E2E (`qa-engineer`).
@@ -51,4 +57,5 @@ Dependency rule: `app` → `modules/*/server` → `modules/*/domain`.
 8. Conventional Commits; one concern per commit.
 
 ## Definition of Done
+
 CI green · coverage ≥ 90% in `domain` · axe 0 violations · Lighthouse ≥ 95 (mobile, public pages) · code-reviewer score ≥ 98 · security-reviewer: 0 High/Critical · CHANGELOG updated.
