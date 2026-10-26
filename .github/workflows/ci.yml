@@ -62,7 +62,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Scan full history
-        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --verbose
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f git /repo --redact --verbose
 
   build:
     name: Build · E2E (axe) · Lighthouse
@@ -109,13 +109,16 @@ jobs:
       - run: docker compose up --detach --wait --wait-timeout 120
       - name: Postgres has btree_gist
         run: docker compose exec -T postgres psql -U popcorn -d popcorn -tAc "select 1 from pg_extension where extname = 'btree_gist'" | grep -qx 1
-      - name: Postgres rejects a wrong password over TCP
+      # Auth checks connect over the compose network like the app will; inside the
+      # container the official image trusts 127.0.0.1, which would prove nothing.
+      - name: Postgres rejects a wrong password
         run: |
-          ! docker compose exec -T -e PGPASSWORD=wrong postgres psql -h 127.0.0.1 -U popcorn_app -d popcorn -c 'select 1'
+          ! docker compose run --rm --no-deps -e PGPASSWORD=wrong --entrypoint psql postgres \
+            -h postgres -U popcorn_app -d popcorn -c 'select 1'
       - name: App role is not a superuser and cannot create in public
         run: |
-          docker compose exec -T -e PGPASSWORD=change-me-too postgres \
-            psql -h 127.0.0.1 -U popcorn_app -d popcorn -tAc \
+          docker compose run --rm --no-deps -e PGPASSWORD=change-me-too --entrypoint psql postgres \
+            -h postgres -U popcorn_app -d popcorn -tAc \
             "select rolsuper or has_schema_privilege('public', 'CREATE') from pg_roles where rolname = current_user" \
             | grep -qx f
       - name: Redis requires a password
