@@ -59,6 +59,19 @@
       "@parcel/watcher",
       "@swc/core",
       "unrs-resolver"
-    ]
+    ],
+    "overrides": {
+      "@lhci/cli>tmp": "0.2.7",
+      "external-editor>tmp": "0.2.7",
+      "get-uri>basic-ftp": "6.2.3",
+      "@lhci/cli>uuid": "11.1.1"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-jmr9-qjv8-65gv",
+        "GHSA-7pqw-9j4j-h8q3",
+        "GHSA-mrhx-c7xc-m3w5"
+      ]
+    }
   }
 }
