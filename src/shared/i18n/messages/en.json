@@ -1,0 +1,18 @@
+{
+  "Metadata": {
+    "title": "Nakaya, em. café and Izakaya",
+    "description": "Website of Nakaya and em. café in Elahieh, Tehran, and Izakaya at Mika Mall, Kish."
+  },
+  "Home": {
+    "eyebrow": "Popcorn Group",
+    "title": "Coming soon",
+    "lead": "Our new website is being crafted.",
+    "brandsLabel": "Our restaurants",
+    "brands": {
+      "nakaya": "Nakaya",
+      "emCafe": "em. café",
+      "izakaya": "Izakaya"
+    },
+    "switchLocale": "فارسی"
+  }
+}
