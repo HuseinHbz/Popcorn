@@ -13,17 +13,21 @@ concurrency:
 permissions:
   contents: read
 
+# Third-party actions are pinned to full commit SHAs (tag in the trailing comment);
+# Dependabot keeps them current (.github/dependabot.yml).
+
 jobs:
   quality:
-    name: Lint · format · typecheck · unit tests
+    name: Lint · format · typecheck · unit tests · audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -35,25 +39,41 @@ jobs:
           else
             pnpm exec commitlint --from origin/main --to HEAD --verbose
           fi
+      - name: Dependency audit (accepted risks in docs/security/risk-register.md)
+        run: pnpm audit --audit-level=high
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test:coverage
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: coverage
           path: coverage/
           retention-days: 14
 
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan full history
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --verbose
+
   build:
     name: Build · E2E (axe) · Lighthouse
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -61,7 +81,7 @@ jobs:
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm e2e
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: playwright-report
@@ -69,7 +89,7 @@ jobs:
           retention-days: 14
       - name: Lighthouse CI (mobile)
         run: pnpm lhci
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: lighthouse
@@ -81,12 +101,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - run: cp .env.example .env
       - run: docker compose config --quiet
       - run: docker compose up --detach --wait --wait-timeout 120
       - name: Postgres has btree_gist
         run: docker compose exec -T postgres psql -U popcorn -d popcorn -tAc "select 1 from pg_extension where extname = 'btree_gist'" | grep -qx 1
+      - name: Postgres rejects a wrong password over TCP
+        run: |
+          ! docker compose exec -T -e PGPASSWORD=wrong postgres psql -h 127.0.0.1 -U popcorn_app -d popcorn -c 'select 1'
+      - name: App role is not a superuser and cannot create in public
+        run: |
+          docker compose exec -T -e PGPASSWORD=change-me-too postgres \
+            psql -h 127.0.0.1 -U popcorn_app -d popcorn -tAc \
+            "select rolsuper or has_schema_privilege('public', 'CREATE') from pg_roles where rolname = current_user" \
+            | grep -qx f
+      - name: Redis requires a password
+        run: docker compose exec -T redis sh -c 'unset REDISCLI_AUTH; redis-cli ping' | grep -q NOAUTH
       - name: Object storage rejects anonymous access
         run: test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8333/popcorn-media)" = 403
       - if: always()
