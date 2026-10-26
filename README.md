@@ -6,7 +6,7 @@ Website and admin platform for Popcorn Group's restaurants: public bilingual sit
 
 ## Status
 
-Phase 0 — planning. No application code yet.
+Phase 0 — planning. No application code yet. Start with `claude` then `/phase 00`.
 
 ## Documents
 
@@ -18,6 +18,7 @@ Phase 0 — planning. No application code yet.
 | Claude Code subagents (team roles) | [`.claude/agents/`](.claude/agents/) |
 | Scorecard template (≥ 98/100 gate) | [`docs/scorecards/TEMPLATE.md`](docs/scorecards/TEMPLATE.md) |
 | User stories | [`docs/stories/`](docs/stories/) |
+| Execution phases for Claude Code (`/phase NN`, `/review`) | [`docs/phases/`](docs/phases/) |
 
 ## Releases
 
