@@ -1,15 +1,19 @@
 # Local development services (ADR 0008). Production compose arrives in Phase 5.
 # Ports bind to 127.0.0.1 only. Credentials come from .env (see .env.example).
+# Images are pinned by digest; Dependabot proposes updates (.github/dependabot.yml).
 name: popcorn
 
 services:
   postgres:
-    image: postgres:17.6-alpine
+    image: postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-popcorn}
       POSTGRES_USER: ${POSTGRES_USER:-popcorn}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Least-privilege role the app connects with (created by docker/postgres/init).
+      APP_DB_USER: ${APP_DB_USER:-popcorn_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
     ports:
       - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
@@ -22,7 +26,7 @@ services:
       retries: 10
 
   redis:
-    image: redis:7.4-alpine
+    image: redis:7.4.12-alpine@sha256:338fbfc036dc5517ac0b04d6de21521085935336e565f223406180e9d84166e2
     restart: unless-stopped
     command:
       [
@@ -37,16 +41,17 @@ services:
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ['CMD-SHELL', 'redis-cli -a "$${REDIS_PASSWORD}" --no-auth-warning ping | grep PONG']
+      test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
       interval: 5s
       timeout: 3s
       retries: 10
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # redis-cli reads the password from here, keeping it off the healthcheck command line.
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
 
   # S3-compatible object storage for menu images and résumés (ADR 0013).
   objectstore:
-    image: chrislusf/seaweedfs:4.51
+    image: chrislusf/seaweedfs:4.51@sha256:f7a49e3f3972ebed5be2ed4befa4a0c68eb7bdddba6e692d42729ceb545134b8
     restart: unless-stopped
     command: ['mini', '-dir=/data', '-bucket=${S3_BUCKET:-popcorn-media}']
     environment:
