@@ -41,8 +41,38 @@ for (const { locale, dir, title, switchTo } of PAGES) {
 test('sends security headers', async ({ request }) => {
   const response = await request.get('/fa');
   const headers = response.headers();
+  const csp = headers['content-security-policy'] ?? '';
+
   expect(headers['x-frame-options']).toBe('DENY');
   expect(headers['x-content-type-options']).toBe('nosniff');
-  expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+  expect(headers['strict-transport-security']).toBe('max-age=63072000; includeSubDomains');
+  expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+  expect(headers['permissions-policy']).toBe('camera=(), microphone=(), geolocation=()');
+  expect(headers['cross-origin-opener-policy']).toBe('same-origin');
+  expect(headers['cross-origin-resource-policy']).toBe('same-origin');
   expect(headers['x-powered-by']).toBeUndefined();
+  for (const directive of [
+    "default-src 'self'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "frame-ancestors 'none'",
+  ]) {
+    expect(csp).toContain(directive);
+  }
+  expect(csp).not.toContain('unsafe-eval');
+});
+
+test.describe('locale proxy', () => {
+  for (const path of ['/apiary', '/em.cafe']) {
+    test(`redirects ${path} to its Persian URL`, async ({ request }) => {
+      const response = await request.get(path, { maxRedirects: 0 });
+      expect(response.status()).toBe(307);
+      expect(response.headers().location).toBe(`/fa${path}`);
+    });
+  }
+
+  test('serves static files without a locale redirect', async ({ request }) => {
+    const response = await request.get('/icon.svg', { maxRedirects: 0 });
+    expect(response.status()).toBe(200);
+  });
 });
