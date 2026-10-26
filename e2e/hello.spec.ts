@@ -61,3 +61,18 @@ test('sends security headers', async ({ request }) => {
   }
   expect(csp).not.toContain('unsafe-eval');
 });
+
+test.describe('locale proxy', () => {
+  for (const path of ['/apiary', '/em.cafe']) {
+    test(`redirects ${path} to its Persian URL`, async ({ request }) => {
+      const response = await request.get(path, { maxRedirects: 0 });
+      expect(response.status()).toBe(307);
+      expect(response.headers().location).toBe(`/fa${path}`);
+    });
+  }
+
+  test('serves static files without a locale redirect', async ({ request }) => {
+    const response = await request.get('/icon.svg', { maxRedirects: 0 });
+    expect(response.status()).toBe(200);
+  });
+});
