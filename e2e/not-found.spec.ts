@@ -15,6 +15,16 @@ const CASES = [
 
 for (const { path, lang, dir, title } of CASES) {
   test.describe(`404 at ${path}`, () => {
+    // The page must not depend on JavaScript: crawlers and script-less browsers get this.
+    test('is complete in the HTML the server sends', async ({ request }) => {
+      const response = await request.get(path, { maxRedirects: 0 });
+      expect(response.status()).toBe(404);
+      const html = await response.text();
+      expect(html).toMatch(new RegExp(`<html lang="${lang}" dir="${dir}"`));
+      expect(html).toContain(`<title>${title}</title>`);
+      expect(html).toMatch(new RegExp(`<h1[^>]*>${title}</h1>`));
+    });
+
     test('is localized, sets lang and dir, answers 404 and is not cached', async ({ page }) => {
       const response = await page.goto(path);
       expect(response?.status()).toBe(404);

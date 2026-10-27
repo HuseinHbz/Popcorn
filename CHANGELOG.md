@@ -6,7 +6,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 ### Added
 
-- Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, localized and accessible 404 pages for every unknown path, never cached (a `global-not-found.tsx` for single segments such as `/api`, ADR 0018).
+- Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, one localized, accessible 404 for every unknown path, rendered on the server (complete without JavaScript) and never cached (`global-not-found.tsx`, ADR 0018).
 - Module skeleton for the ten plan modules (`domain`, `server`, `ui` entries) and `shared/auth`; `pnpm verify` (lint, format, typecheck, tests with coverage, build).
 - `src/shared/config/env.ts`: Zod-validated environment; the server refuses to start on an invalid env and never prints values; `APP_ENV` is required, and production rejects placeholders in any spelling or encoding, short service passwords and S3 secrets, and plain http to a remote S3 endpoint.
 - `src/shared/lib`: `toPersianDigits`, `formatToman` (BIGINT Rial → grouped Toman) and `formatJalali` (Persian calendar, Asia/Tehran), at 100% coverage.

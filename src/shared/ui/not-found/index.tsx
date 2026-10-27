@@ -1,10 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 
 import { Link } from '@/shared/i18n/navigation';
+import type { AppLocale } from '@/shared/i18n/routing';
 
-/** The localized 404 body, shared by the locale 404 and the global 404. */
-export async function NotFoundContent() {
-  const t = await getTranslations('NotFound');
+/** The localized 404 body (src/app/global-not-found.tsx). */
+export async function NotFoundContent({ locale }: { locale: AppLocale }) {
+  const t = await getTranslations({ locale, namespace: 'NotFound' });
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-6 px-6 py-24">
