@@ -9,9 +9,11 @@ on:
     - cron: '17 3 * * 1'
   workflow_dispatch:
 
+# Each push's commits are linted only by its own run, so on main every commit gets its own
+# group: GitHub would otherwise replace a queued run with a newer one, and the replaced
+# push would never be linted. Branches share a group per ref and cancel superseded runs.
 concurrency:
-  group: ci-${{ github.event_name }}-${{ github.ref }}
-  # Never cancel on main: each push's commits are linted only by its own run.
+  group: ci-${{ github.event_name }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
