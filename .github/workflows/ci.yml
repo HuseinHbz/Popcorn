@@ -164,7 +164,8 @@ jobs:
         run: pnpm lhci
       - name: Lighthouse scores to job summary
         if: always()
-        run: node scripts/lighthouse-summary.ts >> "$GITHUB_STEP_SUMMARY"
+        # Also printed to the log: the summary and the artifact need a browser session to read.
+        run: node scripts/lighthouse-summary.ts | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
