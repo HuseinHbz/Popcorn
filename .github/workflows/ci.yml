@@ -11,7 +11,8 @@ on:
 
 concurrency:
   group: ci-${{ github.event_name }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel on main: each push's commits are linted only by its own run.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -131,6 +132,8 @@ jobs:
         with:
           name: lighthouse
           path: .lighthouseci/
+          # The directory is hidden; upload-artifact skips hidden files by default.
+          include-hidden-files: true
           retention-days: 14
 
   services:
