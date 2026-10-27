@@ -15,7 +15,9 @@ import localFont from 'next/font/local';
  * covers. next/font only accepts literal options, so the Latin range is repeated.
  * The Arabic range adds U+0020 and U+00A0, whose glyphs the Arabic file contains:
  * CSS takes line metrics from the first face whose range covers the space, so without
- * them a Persian heading would download the next face (Shippori) and use none of it. `adjustFontFallback` is off because Next's generated fallback
+ * them a Persian heading would download the next face (Shippori) and use none of it.
+ *
+ * `adjustFontFallback` is off because Next's generated fallback
  * (`local("Arial")`) has no unicode-range and would sit between the two subsets
  * in the stack, so Persian text would render in Arial on systems that have it.
  * The fallback stack is declared once, after both subsets (globals.css).
