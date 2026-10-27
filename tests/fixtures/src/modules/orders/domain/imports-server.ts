@@ -1,3 +1,3 @@
-import { createOrder } from '../server';
+import { createOrder } from '../server'; // expect: boundaries/dependencies
 
 export const leak = createOrder;

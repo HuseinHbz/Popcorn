@@ -1,4 +1,4 @@
-export function tooLong(): number {
+export function tooLong(): number { // expect: max-lines-per-function
   let total = 0;
   total += 0;
   total += 1;
