@@ -5,13 +5,29 @@ import nextTypescript from 'eslint-config-next/typescript';
 import prettier from 'eslint-config-prettier/flat';
 import tseslint from 'typescript-eslint';
 
-// Raw colour literals are banned outside the token source (CLAUDE.md: tokens only).
+// CLAUDE.md: only design tokens for colour, spacing, radius and font. Bans raw colours
+// (hex, colour functions), Tailwind arbitrary values (`text-[red]`, `w-[13px]`) and
+// inline colour values in style objects (`{ color: 'red' }`).
 const RAW_COLOR = '/#[0-9a-fA-F]{3,8}\\b|\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\\(/';
+const ARBITRARY_VALUE = '/(?:^|\\s)!?-?[a-z][a-z0-9:-]*-\\[[^\\]\\s]+\\]/';
+const COLOR_KEY = '/^(?:background|fill|stroke|[a-zA-Z]*[cC]olor)$/';
 const TOKEN_SYNTAX = [
   { selector: `Literal[value=${RAW_COLOR}]`, message: 'Use a design token, not a raw colour.' },
   {
     selector: `TemplateElement[value.raw=${RAW_COLOR}]`,
     message: 'Use a design token, not a raw colour.',
+  },
+  {
+    selector: `Literal[value=${ARBITRARY_VALUE}]`,
+    message: 'Use a theme token, not a Tailwind arbitrary value.',
+  },
+  {
+    selector: `TemplateElement[value.raw=${ARBITRARY_VALUE}]`,
+    message: 'Use a theme token, not a Tailwind arbitrary value.',
+  },
+  {
+    selector: `Property[key.name=${COLOR_KEY}] > Literal`,
+    message: 'Use a design-token class, not an inline colour value.',
   },
 ];
 

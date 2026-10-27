@@ -16,6 +16,18 @@ describe('findRawColors', () => {
     ]);
   });
 
+  it('reports CSS named colours in colour-bearing declarations', () => {
+    const css = '.a { color: red; }\n.b { border: 1px solid white; }\n.c { fill: currentColor; }\n';
+    expect(findRawColors(css)).toEqual([
+      { line: 1, match: 'red' },
+      { line: 2, match: 'white' },
+    ]);
+  });
+
+  it('ignores colour names outside colour-bearing declarations', () => {
+    expect(findRawColors('.tan-card { content: "red"; animation-name: orange; }')).toEqual([]);
+  });
+
   it('allows token references', () => {
     expect(findRawColors('.a { color: var(--color-ink); }')).toEqual([]);
   });

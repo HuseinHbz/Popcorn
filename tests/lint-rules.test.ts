@@ -87,6 +87,13 @@ describe('pure code', () => {
 describe('code rules', () => {
   it('rejects hex and colour-function literals', () => {
     const rules = rulesIn('shared/ui/raw-colors.ts');
+    // '#a8322a', 'rgb(…)', and 'bg-[oklch(…)]' twice: colour function and arbitrary value.
+    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(4);
+  });
+
+  it('rejects inline colour values and Tailwind arbitrary values', () => {
+    const rules = rulesIn('shared/ui/named-colors.tsx');
+    // color: 'red', backgroundColor: 'white', "text-[red] w-[13px]"
     expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(3);
   });
 
