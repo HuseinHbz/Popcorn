@@ -92,6 +92,8 @@ jobs:
         run: node scripts/check-risk-register.ts
       - name: .nvmrc has every Node security release of its major line
         run: node scripts/check-node-version.ts
+      - name: The pinned package manager has no High or Critical advisory
+        run: node scripts/check-package-manager.ts
 
   build:
     name: Verify (lint · format · typecheck · tests · build) · E2E (axe) · Lighthouse
