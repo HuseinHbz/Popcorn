@@ -1,13 +1,19 @@
 import { z } from 'zod';
 
-const PLACEHOLDER = 'change-me';
+/** Any spelling of the `.env.example` placeholder: change-me, CHANGE_ME, ChangeMe. */
+const PLACEHOLDER = /change[-_ ]?me/i;
+/** Production S3 secrets are generated, so a short one is a typo or a test value. */
+const MIN_PRODUCTION_SECRET = 32;
 
 const url = (protocols: RegExp) => z.url({ protocol: protocols });
 
 /** Every environment variable the application reads (CLAUDE.md: Zod at every boundary). */
 const envSchema = z.object({
-  /** Deployment environment, set explicitly by the deploy (Next.js fixes NODE_ENV itself). */
-  APP_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  /**
+   * Deployment environment (Next.js fixes NODE_ENV itself). Required with no default:
+   * a production deploy that forgot it must not start with the development rules.
+   */
+  APP_ENV: z.enum(['development', 'test', 'production']),
   DATABASE_URL: url(/^postgres(?:ql)?$/),
   REDIS_URL: url(/^rediss?$/),
   S3_ENDPOINT: url(/^https?$/),
@@ -26,11 +32,19 @@ export class EnvError extends Error {
   }
 }
 
-function placeholderProblems(env: Env): string[] {
+/** Rules that only production enforces: local services run with throwaway credentials. */
+function productionProblems(env: Env): string[] {
   if (env.APP_ENV !== 'production') return [];
-  return Object.entries(env)
-    .filter(([, value]) => value.includes(PLACEHOLDER))
-    .map(([key]) => `${key}: still contains the "${PLACEHOLDER}" placeholder`);
+  const problems = Object.entries(env)
+    .filter(([, value]) => PLACEHOLDER.test(value))
+    .map(([key]) => `${key}: still contains a "change-me" placeholder`);
+  for (const key of ['DATABASE_URL', 'REDIS_URL'] as const) {
+    if (new URL(env[key]).password === '') problems.push(`${key}: has no password`);
+  }
+  if (env.S3_SECRET_KEY.length < MIN_PRODUCTION_SECRET) {
+    problems.push(`S3_SECRET_KEY: shorter than ${String(MIN_PRODUCTION_SECRET)} characters`);
+  }
+  return problems;
 }
 
 /** Validates `source` (usually `process.env`) and returns the typed environment. */
@@ -41,7 +55,7 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
       result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.code}`),
     );
   }
-  const placeholders = placeholderProblems(result.data);
-  if (placeholders.length > 0) throw new EnvError(placeholders);
+  const problems = productionProblems(result.data);
+  if (problems.length > 0) throw new EnvError(problems);
   return result.data;
 }

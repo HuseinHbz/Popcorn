@@ -8,7 +8,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 - Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, localized and accessible 404 pages for every unknown path.
 - Module skeleton for the ten plan modules (`domain`, `server`, `ui` entries) and `shared/auth`; `pnpm verify` (lint, format, typecheck, tests with coverage, build).
-- `src/shared/config/env.ts`: Zod-validated environment; the server refuses to start on an invalid env and never prints values; `APP_ENV=production` rejects `change-me` placeholders.
+- `src/shared/config/env.ts`: Zod-validated environment; the server refuses to start on an invalid env and never prints values; `APP_ENV` is required, and production rejects placeholders, password-less service URLs and short S3 secrets.
 - `src/shared/lib`: `toPersianDigits`, `formatToman` (BIGINT Rial → grouped Toman) and `formatJalali` (Persian calendar, Asia/Tehran), at 100% coverage.
 - Fonts: self-hosted static Vazirmatn subsets and Shippori Mincho (Latin display) with checksums; a `--font-heading-fa` slot for Peyda (ADR 0017).
 - Enforced engineering rules (ADR 0015): module boundaries (`eslint-plugin-boundaries`), pure `domain/` and `shared/lib` (no packages, I/O, clock or randomness), tokens only (no raw or named colours, no Tailwind arbitrary values), user-facing text only through next-intl, no inline disables, size limits; every rule proven by fixture tests.
