@@ -1,0 +1,11 @@
+# Changes to the security and supply-chain controls are routed to the owner for review
+# (ADR 0016; security review round 4, G1). Enforced once the main ruleset requires
+# code-owner review (docs/security/risk-register.md, "Branch protection on main").
+/.github/                @HuseinHbz
+/.gitleaksignore         @HuseinHbz
+/package.json            @HuseinHbz
+/pnpm-workspace.yaml     @HuseinHbz
+/eslint.config.mjs       @HuseinHbz
+/next.config.ts          @HuseinHbz
+/src/shared/config/      @HuseinHbz
+/docs/security/          @HuseinHbz
