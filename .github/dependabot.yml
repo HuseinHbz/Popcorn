@@ -1,4 +1,4 @@
-# Weekly dependency updates (ADR 0014: versions are pinned; upgrades are explicit PRs).
+# Weekly dependency updates (ADR 0016: versions are pinned; upgrades are explicit PRs).
 version: 2
 updates:
   - package-ecosystem: npm

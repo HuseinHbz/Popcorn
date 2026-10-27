@@ -7,7 +7,7 @@ import localFont from 'next/font/local';
  *
  * Static 400/700 instead of the variable font: on throttled mobile, shaping
  * Persian text with the variable font cost ~270 ms of layout and pushed
- * Lighthouse performance below 95 (ADR 0014). Add a weight only when a design uses it.
+ * Lighthouse performance below 95 (ADR 0017). Add a weight only when a design uses it.
  *
  * The Latin and Arabic-script subsets are separate families; the browser picks
  * per glyph. `adjustFontFallback` is off because Next's generated fallback
