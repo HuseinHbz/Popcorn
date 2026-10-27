@@ -1,8 +1,8 @@
 import '../globals.css';
 
 import type { Metadata } from 'next';
-import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { getTranslations } from 'next-intl/server';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { directionOf, routing } from '@/shared/i18n/routing';
 import { shipporiMincho, vazirmatnArabic, vazirmatnLatin } from '@/shared/ui/fonts';
@@ -16,11 +16,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title'), description: t('description') };
 }
 
-export default async function LocaleLayout({ children, params }: LayoutProps<'/[locale]'>) {
-  // An unknown first segment (`/t/…`, `/api/…`) renders the shell in the default locale;
-  // the page below answers 404, so the 404 page is localized and accessible.
-  const { locale: requested } = await params;
-  const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
+export default async function LocaleLayout({ children }: LayoutProps<'/[locale]'>) {
+  // The request config (shared/i18n/request.ts) resolves the locale and falls back to the
+  // default for an unknown first segment (`/t/…`, `/api/…`); the page below answers 404,
+  // so the 404 page is localized and accessible.
+  const locale = await getLocale();
 
   return (
     <html

@@ -1,8 +1,8 @@
-import type { FormatLocale } from './locale';
+import type { Locale } from './locale';
 
 export type JalaliStyle = 'long' | 'short' | 'dateTime';
 
-const CALENDAR_LOCALES: Record<FormatLocale, string> = {
+const CALENDAR_LOCALES: Record<Locale, string> = {
   fa: 'fa-IR-u-ca-persian',
   en: 'en-US-u-ca-persian',
 };
@@ -19,7 +19,7 @@ const STYLES: Record<JalaliStyle, Intl.DateTimeFormatOptions> = {
  */
 export function formatJalali(
   date: Date,
-  locale: FormatLocale = 'fa',
+  locale: Locale = 'fa',
   style: JalaliStyle = 'long',
 ): string {
   return new Intl.DateTimeFormat(CALENDAR_LOCALES[locale], {
