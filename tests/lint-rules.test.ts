@@ -137,7 +137,7 @@ describe('code rules', () => {
 
   it('rejects quoted, templated, named and SVG colours and inline spacing, radius and font', () => {
     // Exact lines, and the dynamic values and keywords that stay allowed, are in the fixture.
-    expect(rulesIn('shared/ui/token-bypasses.tsx')).toHaveLength(13);
+    expect(rulesIn('shared/ui/token-bypasses.tsx')).toHaveLength(20);
   });
 
   it('rejects user-facing text that bypasses next-intl', () => {
