@@ -2,9 +2,18 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 
 const PAGES = [
-  { locale: 'fa', dir: 'rtl', title: 'به‌زودی', switchTo: 'English' },
-  { locale: 'en', dir: 'ltr', title: 'Coming soon', switchTo: 'فارسی' },
+  { locale: 'fa', dir: 'rtl', title: 'به‌زودی', switchTo: 'English', other: 'en', otherDir: 'ltr' },
+  {
+    locale: 'en',
+    dir: 'ltr',
+    title: 'Coming soon',
+    switchTo: 'فارسی',
+    other: 'fa',
+    otherDir: 'rtl',
+  },
 ] as const;
+
+const OTHER_TITLE = { fa: 'به‌زودی', en: 'Coming soon' } as const;
 
 test('the root path redirects to Persian', async ({ page }) => {
   await page.goto('/');
@@ -12,7 +21,7 @@ test('the root path redirects to Persian', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 });
 
-for (const { locale, dir, title, switchTo } of PAGES) {
+for (const { locale, dir, title, switchTo, other, otherDir } of PAGES) {
   test.describe(`hello page (${locale})`, () => {
     test('sets language and text direction', async ({ page }) => {
       await page.goto(`/${locale}`);
@@ -25,7 +34,26 @@ for (const { locale, dir, title, switchTo } of PAGES) {
     test('switches to the other language', async ({ page }) => {
       await page.goto(`/${locale}`);
       await page.getByRole('link', { name: switchTo }).click();
-      await expect(page.locator('html')).not.toHaveAttribute('lang', locale);
+      await expect(page).toHaveURL(new RegExp(`/${other}$`));
+      const html = page.locator('html');
+      await expect(html).toHaveAttribute('lang', other);
+      await expect(html).toHaveAttribute('dir', otherDir);
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(OTHER_TITLE[other]);
+    });
+
+    test('renders text in self-hosted Vazirmatn', async ({ page }) => {
+      await page.goto(`/${locale}`);
+      const fonts = await page.evaluate(async () => {
+        await document.fonts.ready;
+        const stack = getComputedStyle(document.body).fontFamily;
+        const loaded = [...document.fonts]
+          .filter((face) => face.status === 'loaded')
+          .map((face) => face.family.replaceAll('"', ''));
+        return { stack, loaded };
+      });
+      // Both subsets come first in the stack, before any system fallback (ADR 0012).
+      expect(fonts.stack).toMatch(/^"?vazirmatnLatin"?, "?vazirmatnArabic"?,/);
+      expect(fonts.loaded).toContain(locale === 'fa' ? 'vazirmatnArabic' : 'vazirmatnLatin');
     });
 
     test('has no axe violations', async ({ page }) => {
