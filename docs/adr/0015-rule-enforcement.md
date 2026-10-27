@@ -55,8 +55,13 @@ asserts it fires.
   referenced), `Date()`, `new Date()`, computed access (`Date['now']`), aliases (`const D =
 Date`) and argument-less Intl `format()`. The clock and randomness are passed in.
 - **Tokens:**
-  - In TS/TSX, hex and colour-function literals, every Tailwind arbitrary value
-    (`text-[red]`, `w-[13px]`) and inline colour values in style objects are banned.
+  - In TS/TSX, these are banned: hex and colour-function literals; every Tailwind arbitrary
+    value or property (`text-[red]`, `w-[13px]`, `[color:red]`); any literal for a colour
+    property (`color`, `fill`, `backgroundColor`, quoted keys and template literals included);
+    the 148 named colours in colour-bearing values (`border: '1px solid red'`) and SVG colour
+    attributes; and literal spacing, radius and font values in inline `style` attributes.
+    Dynamic values and CSS custom properties stay allowed. The named colours are shared with
+    the CSS check (`scripts/named-colors.json`).
   - In CSS, `scripts/check-raw-colors.ts` bans hex, colour functions and the 148 named colours
     outside `@theme`.
   - SVG files are brand artwork and exempt.
