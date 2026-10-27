@@ -7,6 +7,28 @@ import tseslint from 'typescript-eslint';
 
 // Raw colour literals are banned outside the token source (CLAUDE.md: tokens only).
 const RAW_COLOR = '/#[0-9a-fA-F]{3,8}\\b|\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\\(/';
+const TOKEN_SYNTAX = [
+  { selector: `Literal[value=${RAW_COLOR}]`, message: 'Use a design token, not a raw colour.' },
+  {
+    selector: `TemplateElement[value.raw=${RAW_COLOR}]`,
+    message: 'Use a design token, not a raw colour.',
+  },
+];
+
+// Pure code reads no ambient state: the clock and randomness are passed in.
+const PURE_MESSAGE = '`domain/` and `shared/lib` must stay pure: pass the clock or randomness in.';
+const PURE_SYNTAX = [
+  {
+    selector: "CallExpression[callee.object.name='Date'][callee.property.name='now']",
+    message: PURE_MESSAGE,
+  },
+  { selector: "NewExpression[callee.name='Date'][arguments.length=0]", message: PURE_MESSAGE },
+  {
+    selector: "CallExpression[callee.object.name='Math'][callee.property.name='random']",
+    message: PURE_MESSAGE,
+  },
+];
+
 const SAME_MODULE = { module: '{{ from.element.captured.module }}' };
 
 /**
@@ -85,10 +107,20 @@ const IMPURE_GLOBALS = [
   'process',
   'window',
   'document',
+  'globalThis',
+  'self',
+  'navigator',
+  'location',
+  'console',
+  'crypto',
+  'performance',
   'localStorage',
   'sessionStorage',
   'XMLHttpRequest',
   'WebSocket',
+  'setTimeout',
+  'setInterval',
+  'Buffer',
 ];
 
 export default defineConfig([
@@ -136,33 +168,25 @@ export default defineConfig([
           policies: boundaryPolicies,
         },
       ],
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: `Literal[value=${RAW_COLOR}]`,
-          message: 'Use a design token, not a raw colour.',
-        },
-        {
-          selector: `TemplateElement[value.raw=${RAW_COLOR}]`,
-          message: 'Use a design token, not a raw colour.',
-        },
-      ],
+      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX],
     },
   },
   {
     // Pure code performs no I/O and reads no ambient state.
     files: [
-      'src/modules/*/domain/**/*.ts',
-      'src/shared/lib/**/*.ts',
-      'tests/fixtures/src/modules/*/domain/**/*.ts',
+      'src/modules/*/domain/**/*.{ts,tsx}',
+      'src/shared/lib/**/*.{ts,tsx}',
+      'tests/fixtures/src/modules/*/domain/**/*.{ts,tsx}',
+      'tests/fixtures/src/shared/lib/**/*.{ts,tsx}',
     ],
     ignores: ['**/*.test.ts'],
     rules: {
+      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...PURE_SYNTAX],
       'no-restricted-globals': [
         'error',
         ...IMPURE_GLOBALS.map((name) => ({
           name,
-          message: '`domain/` and `shared/lib` must stay pure: no I/O or ambient state.',
+          message: '`domain/` and `shared/lib` must stay pure: no I/O or ambient globals.',
         })),
       ],
     },

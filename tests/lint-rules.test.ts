@@ -70,6 +70,18 @@ describe('pure code', () => {
       expect(rulesIn(path)).toContain('boundaries/dependencies');
     },
   );
+
+  it('rejects the clock, randomness and ambient globals', () => {
+    const rules = rulesIn('modules/orders/domain/ambient.ts');
+    // Date.now(), new Date(), Math.random()
+    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(3);
+    // globalThis, console
+    expect(rules.filter((rule) => rule === 'no-restricted-globals')).toHaveLength(2);
+  });
+
+  it('applies to .tsx files in domain/ too', () => {
+    expect(rulesIn('modules/orders/domain/status-badge.tsx')).toContain('no-restricted-globals');
+  });
 });
 
 describe('code rules', () => {
