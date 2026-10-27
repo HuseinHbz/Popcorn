@@ -36,16 +36,24 @@ Option C:
 
 - **Vazirmatn** 400/700, Latin and Arabic-script subsets, as separate families so the browser
   picks per glyph. Both are preloaded.
-- **Shippori Mincho** 400, Latin subset only. It is not preloaded, because Persian pages do not
-  use its glyphs.
+- **Shippori Mincho** 400, Latin subset only, not preloaded.
+- **`unicode-range` on every face**, copied from `@fontsource` 5.3.0 `unicode.json`, so a browser
+  downloads a face only for text it covers. The Arabic range also lists U+0020 and U+00A0, whose
+  glyphs that file contains: CSS takes line metrics from the first face whose range covers the
+  space, and without them a Persian heading downloaded Shippori without rendering any of it.
+- **Heading order by locale:** English headings lead with Shippori Mincho, then the Persian slot.
+  Persian headings lead with the Persian slot, so Shippori is fetched only for Latin letters in
+  them. Measured: `/fa` requests 4 font files (Vazirmatn only), `/en` requests 5.
 - Files and OFL licences are vendored in `src/shared/ui/fonts/files`, byte-identical to
   `@fontsource` 5.3.0, with SHA-256 checksums in `SHA256SUMS`.
-- `adjustFontFallback: false`. The stack lists both Vazirmatn subsets before any system face,
-  and headings use Shippori Mincho, then the Persian headline slot.
+- `adjustFontFallback: false`. The body stack lists both Vazirmatn subsets before any system
+  face.
 - **Peyda slot:** the `--font-heading-fa` CSS variable points at Vazirmatn until Peyda's web
   licence is confirmed. Adding Peyda means one `localFont` declaration and one line of CSS.
   Its files must come from a private source (the deploy host) while the repository is public.
-- An E2E test asserts the stacks and that the faces load on every page.
+  Its `unicode-range` must include the space (or be omitted); the E2E font test fails otherwise.
+- An E2E test asserts the stacks per locale, that both Vazirmatn subsets load on every page, and
+  that Shippori loads on `/en` but not on `/fa`.
 
 ## Consequences
 
