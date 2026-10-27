@@ -17,6 +17,7 @@ export default defineConfig({
         'src/modules/*/domain/**/*.ts',
         'src/shared/lib/**/*.ts',
         'src/shared/i18n/*.ts',
+        'src/shared/config/*.ts',
         'src/proxy.ts',
       ],
       exclude: ['**/*.test.ts', 'src/shared/i18n/request.ts', 'src/shared/i18n/navigation.ts'],
