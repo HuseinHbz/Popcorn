@@ -20,6 +20,7 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
     "lhci": "lhci autorun",
+    "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:coverage && pnpm build",
     "prepare": "husky"
   },
   "dependencies": {
