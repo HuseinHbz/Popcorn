@@ -64,6 +64,9 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
   plus a ban on literal `alt`, `title`, `placeholder`, `label` and `aria-*` text, including as a
   branch of `?:`, `||`, `&&` or `??`, and on the literal `value` of submit, reset and button
   inputs. A literal passed to a function, such as a message key, is allowed.
+- **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs and
+  `dangerouslySetInnerHTML` are banned everywhere (Semgrep catches them too, but only in CI). A
+  JSON-LD script tag will need a `react/no-danger` override with an ADR link.
 - **Size and types:** `max-lines-per-function: 40`, `max-lines: 300`, no `any`, no `@ts-ignore`.
 
 ## Consequences

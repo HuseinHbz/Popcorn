@@ -193,6 +193,13 @@ export default defineConfig([
       ],
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+      // No code execution from strings and no unescaped markup (security review F8).
+      // A JSON-LD script tag will need a react/no-danger override with an ADR link.
+      'no-eval': 'error',
+      'no-new-func': 'error',
+      'no-script-url': 'error',
+      'react/no-danger': 'error',
+      'react/jsx-no-script-url': 'error',
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
       'max-lines-per-function': ['error', { max: 40, skipBlankLines: true, skipComments: true }],
     },
