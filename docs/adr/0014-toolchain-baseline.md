@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: pending independent review (rubric: docs/project-plan.md §3)
+- Score: 98/100 (code review round 3, at `a457aee`, `docs/scorecards/phase-0/foundation-round-3.md`). Amended after round 3; re-score pending.
 - Related: ADR 0001–0003 (stack), ADR 0015 (rule enforcement), ADR 0016 (supply chain), ADR 0017 (fonts)
 
 ## Context
