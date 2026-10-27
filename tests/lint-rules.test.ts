@@ -110,6 +110,13 @@ describe('pure code', () => {
     expect(rules.filter((rule) => rule === 'no-restricted-globals')).toHaveLength(2);
   });
 
+  it('rejects Date(), computed access, aliases, argument-less Intl formatting and more I/O', () => {
+    // Exact lines, and the pure uses that stay allowed, are marked in the fixture.
+    const rules = rulesIn('modules/orders/domain/ambient-bypasses.ts');
+    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(8);
+    expect(rules.filter((rule) => rule === 'no-restricted-globals')).toHaveLength(5);
+  });
+
   it('applies to .tsx files in domain/ too', () => {
     expect(rulesIn('modules/orders/domain/status-badge.tsx')).toContain('no-restricted-globals');
   });

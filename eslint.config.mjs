@@ -55,16 +55,21 @@ const I18N_SYNTAX = [
 // Pure code reads no ambient state: the clock and randomness are passed in.
 const PURE_MESSAGE = '`domain/` and `shared/lib` must stay pure: pass the clock or randomness in.';
 const PURE_SYNTAX = [
-  {
-    selector: "CallExpression[callee.object.name='Date'][callee.property.name='now']",
-    message: PURE_MESSAGE,
-  },
-  { selector: "NewExpression[callee.name='Date'][arguments.length=0]", message: PURE_MESSAGE },
-  {
-    selector: "CallExpression[callee.object.name='Math'][callee.property.name='random']",
-    message: PURE_MESSAGE,
-  },
-];
+  // Date.now and Math.random, whether called or passed around.
+  "MemberExpression[object.name='Date'][property.name='now']",
+  "MemberExpression[object.name='Math'][property.name='random']",
+  // Computed access hides the member name: Date['now'](), Math[key]().
+  'MemberExpression[object.name=/^(?:Date|Math)$/][computed=true]',
+  // Date() returns the current time whatever its arguments; so does new Date().
+  "CallExpression[callee.name='Date']",
+  "NewExpression[callee.name='Date'][arguments.length=0]",
+  // Any other use of Date or Math as a value is an alias that escapes the rules above
+  // (const D = Date; Reflect.get(Math, 'random')). Members, `new Date(x)`, `instanceof`
+  // and type positions stay allowed.
+  "Identifier[name=/^(?:Date|Math)$/]:not(MemberExpression > .object, NewExpression > .callee, CallExpression > .callee, BinaryExpression[operator='instanceof'] > .right, TSTypeReference > .typeName, TSQualifiedName > .left)",
+  // Intl formatters read the clock when called without a date.
+  'CallExpression[callee.property.name=/^format(?:ToParts)?$/][arguments.length=0]',
+].map((selector) => ({ selector, message: PURE_MESSAGE }));
 
 const SAME_MODULE = { module: '{{ from.element.captured.module }}' };
 
@@ -155,8 +160,14 @@ const IMPURE_GLOBALS = [
   'sessionStorage',
   'XMLHttpRequest',
   'WebSocket',
+  'indexedDB',
+  'caches',
   'setTimeout',
   'setInterval',
+  'setImmediate',
+  'queueMicrotask',
+  'requestAnimationFrame',
+  'requestIdleCallback',
   'Buffer',
 ];
 
