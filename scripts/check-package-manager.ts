@@ -1,6 +1,6 @@
 /**
- * Fails when the pinned package manager (`packageManager` in package.json) has a High or
- * Critical advisory. `pnpm audit` does not audit pnpm itself, and Dependabot does not
+ * Fails when the pinned package manager (`packageManager` in package.json) has a Moderate,
+ * High or Critical advisory. `pnpm audit` does not audit pnpm itself, and Dependabot does not
  * track the field (ADR 0014). Uses the npm registry's bulk advisory API, as `npm audit` does.
  * Usage: node scripts/check-package-manager.ts [name@version]
  */
@@ -37,9 +37,15 @@ export function parseAdvisories(data: unknown, name: string): Advisory[] {
   });
 }
 
-/** Advisories that block: High or Critical. */
+/**
+ * Advisories that block: Moderate and above. Stricter than the dependency audit, because the
+ * package manager's Moderate advisories include lockfile-integrity bypasses, which undermine
+ * the controls of ADR 0016 themselves.
+ */
+const BLOCKING = new Set(['moderate', 'high', 'critical']);
+
 export function blockingAdvisories(advisories: Advisory[]): Advisory[] {
-  return advisories.filter(({ severity }) => severity === 'high' || severity === 'critical');
+  return advisories.filter(({ severity }) => BLOCKING.has(severity));
 }
 
 /** Checks `packageManager` from package.json, or the `name@version` given as an argument. */

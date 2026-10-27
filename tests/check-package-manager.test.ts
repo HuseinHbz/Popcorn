@@ -22,7 +22,7 @@ describe('parsePackageManager', () => {
 });
 
 describe('blockingAdvisories', () => {
-  it('keeps High and Critical only', () => {
+  it('keeps Moderate, High and Critical', () => {
     expect(
       blockingAdvisories([
         { severity: 'moderate' },
@@ -30,7 +30,11 @@ describe('blockingAdvisories', () => {
         { severity: 'critical' },
         { severity: 'low' },
       ]),
-    ).toEqual([{ severity: 'high', title: 'path traversal' }, { severity: 'critical' }]);
+    ).toEqual([
+      { severity: 'moderate' },
+      { severity: 'high', title: 'path traversal' },
+      { severity: 'critical' },
+    ]);
   });
 });
 
