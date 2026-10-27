@@ -35,7 +35,7 @@ Constraints:
 ## Decision
 
 Local development and CI use **SeaweedFS `chrislusf/seaweedfs:4.51`** (pinned by digest in
-`compose.yaml`), started as `weed mini -dir=/data -bucket=popcorn-media`. It listens on
+`docker-compose.dev.yml`), started as `weed mini -dir=/data -bucket=popcorn-media`. It listens on
 `127.0.0.1:8333` and takes credentials from `.env`. CI asserts that anonymous access returns 403.
 
 Application code may only use S3 operations that every candidate backend supports: put/get/delete
@@ -50,7 +50,7 @@ cluster and domestic cloud storage, using the same S3 contract.
 - **Risk:** a feature we need later may be missing from SeaweedFS's S3 gateway. This is mitigated
   by the contract above and by CI exercising the real gateway rather than a mock.
 - **Reversibility:** high. The backend is just an endpoint plus credentials. Swapping it is a
-  `compose.yaml` and `.env` change with no application change.
+  `docker-compose.dev.yml` and `.env` change with no application change.
 - **Iran fit:** Apache-2.0, a single image that a domestic registry mirror can host, and no
   runtime calls abroad.
 
