@@ -10,7 +10,7 @@ Phase 0 — foundation: toolchain, local services, CI and a bilingual RTL hello 
 
 ## Local setup
 
-Requirements: Node 22.23.4 (`.nvmrc`), pnpm 10.34.9 via `corepack enable`, Docker with Compose v2.
+Requirements: Node 22.23.4 (`.nvmrc`), pnpm 10.34.9 via `corepack enable`, Docker with Compose v2 (on Linux, Docker Engine 28 or later: older versions expose unpublished container ports to the LAN).
 
 ```bash
 pnpm install                 # also installs Git hooks (Husky)

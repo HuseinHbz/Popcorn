@@ -64,9 +64,13 @@ The other options were not run, so no figures are claimed for them.
 - **Cost:** none in licences. One container, about 70–135 MB RAM idle (measured).
 - **Security trade-off:**
   - `weed mini`'s master, volume, filer and filer IAM APIs are unauthenticated; the IAM API can
-    create S3 users and policies. They are reachable only inside the object store's own compose
-    network, never from the host, the internet or the other services. Production needs JWT
-    signing for them (`security.toml`; risk register, Phase 5).
+    create S3 users and policies. The other services cannot reach them (own compose network),
+    and they are not published. On Linux, though, the host itself routes to container IPs, so
+    any local process can read stored objects through the filer without credentials (checked:
+    the filer, master and volume ports answer from the host). Docker Engine before 28.0 also
+    let other machines on the LAN reach unpublished ports; the README requires 28 or later.
+    Production needs JWT signing for these APIs and must keep their ports unreachable
+    (`security.toml`; risk register, Phase 5).
   - A single admin S3 identity is acceptable for local development. Production needs per-purpose
     least-privilege identities (risk register, Phase 5).
 - **Risk:** a feature we need later may be missing from the S3 gateway. This is mitigated by the
