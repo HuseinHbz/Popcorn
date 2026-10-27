@@ -73,8 +73,13 @@ The other options were not run, so no figures are claimed for them.
     (`security.toml`; risk register, Phase 5).
   - A single admin S3 identity is acceptable for local development. Production needs per-purpose
     least-privilege identities (risk register, Phase 5).
-- **Risk:** a feature we need later may be missing from the S3 gateway. This is mitigated by the
-  contract above and by CI exercising the real gateway rather than a mock.
+- **Risk:**
+  - A feature we need later may be missing from the S3 gateway. This is mitigated by the
+    contract above and by CI exercising the real gateway rather than a mock.
+  - CI exercises signed PUT/GET and anonymous refusals, not presigned URLs, which need an S3
+    client the app does not have yet. The round-4 code review generated presigned GET and PUT
+    URLs by hand against this gateway, and both worked. The storage adapter's tests (Phase 3,
+    menu photos and résumés) must exercise them against this backend in CI.
 - **Reversibility:** high. The backend is an endpoint plus credentials. Swapping it is a
   `docker-compose.dev.yml` and `.env` change, with no application change.
 - **Iran fit:**

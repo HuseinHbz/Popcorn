@@ -62,6 +62,9 @@ Option C:
   - A future design needing more weights adds bytes. Each addition is measured against the
     Lighthouse gate in CI.
   - Without metric adjustment, a font swap can shift layout. The measured CLS was ≤ 0.002.
+  - On `/en` the heading's Shippori Mincho is not preloaded, so the heading first renders in the
+    fallback and swaps when the face arrives. The round-4 code review measured no LCP cost: the
+    fonts are not on the LCP path.
 - **Reversibility:** high. Switching to a variable font or another face is a font-module and
   CSS change, and the E2E font test pins the expectation.
 - **Iran fit:** no runtime font request leaves the server, and files are not fetched at build
