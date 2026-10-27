@@ -1,0 +1,7 @@
+# SHA-256 of the vendored files; identical to @fontsource/vazirmatn@5.3.0 (OFL-1.1).
+# Verify: cd src/shared/ui/fonts/files && grep -v '^#' SHA256SUMS | sha256sum -c
+e6f4ce7b6c830d5a25a4f8ac777c267cd7d3c180bc2a7150ca57cbb9b280c4b7  OFL-vazirmatn.txt
+e31830d3a52e0259b176326385d82bc469581a9898046300de46e5c00f6b7064  vazirmatn-arabic-400-normal.woff2
+aa79f9419fa0f5efcf301158b7405d188c4d434c86c32efad1e8669752feb344  vazirmatn-arabic-700-normal.woff2
+a650d62e37f036d53367b383e7c723c2efd426baf74ee8ccb95b634974955f49  vazirmatn-latin-400-normal.woff2
+a1d13d1cf4cd1ec6af4623ccdacff9cc7beedd6d9cbc4944b56faf59da95478b  vazirmatn-latin-700-normal.woff2
