@@ -22,14 +22,14 @@ pnpm dev                     # http://localhost:3000 → /fa
 Behind restricted networks, point pnpm at a local npm mirror (`pnpm config set registry <mirror>`)
 and Docker at a registry mirror (`registry-mirrors` in `/etc/docker/daemon.json`) — see ADR 0008.
 
-| Command                            | What it checks                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------------- |
-| `pnpm lint`                        | ESLint (`strictTypeChecked`, Next core-web-vitals, CLAUDE.md rules), 0 warnings |
-| `pnpm format:check`                | Prettier                                                                        |
-| `pnpm typecheck`                   | `next typegen` + `tsc --noEmit` (strict, `noUncheckedIndexedAccess`)            |
-| `pnpm test` / `pnpm test:coverage` | Vitest; ≥ 90% coverage on `domain/` and pure shared code                        |
-| `pnpm build && pnpm e2e`           | Production build; Playwright E2E + axe on desktop and mobile                    |
-| `pnpm lhci`                        | Lighthouse CI (mobile) on `/fa` and `/en`, after `pnpm build`                   |
+| Command                            | What it checks                                                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint`                        | ESLint (`strictTypeChecked`, Next core-web-vitals, module boundaries, CLAUDE.md rules) with 0 warnings, plus the CSS raw-colour check |
+| `pnpm format:check`                | Prettier                                                                                                                              |
+| `pnpm typecheck`                   | `next typegen` + `tsc --noEmit` (strict, `noUncheckedIndexedAccess`)                                                                  |
+| `pnpm test` / `pnpm test:coverage` | Vitest: unit tests in `src/`, rule and tooling tests in `tests/`; ≥ 90% coverage on `domain/` and pure shared code                    |
+| `pnpm build && pnpm e2e`           | Production build; Playwright E2E + axe on desktop and mobile                                                                          |
+| `pnpm lhci`                        | Lighthouse CI (mobile) on `/fa` and `/en`, after `pnpm build`                                                                         |
 
 | Service    | Address (127.0.0.1 only)                        |
 | ---------- | ----------------------------------------------- |
