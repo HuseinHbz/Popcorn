@@ -19,8 +19,10 @@ docker compose up -d --wait  # Postgres 17 (+btree_gist), Redis 7, S3 storage (S
 pnpm dev                     # http://127.0.0.1:3000 → /fa (loopback only)
 ```
 
-Behind restricted networks, point pnpm at a local npm mirror (`pnpm config set registry <mirror>`)
-and Docker at a registry mirror (`registry-mirrors` in `/etc/docker/daemon.json`) — see ADR 0008.
+Behind restricted networks, point pnpm and Corepack at a local npm mirror
+(`pnpm config set registry <mirror>` and `COREPACK_NPM_REGISTRY=<mirror>`; Corepack does not read
+pnpm's setting) and Docker at a registry mirror (`registry-mirrors` in `/etc/docker/daemon.json`)
+— see ADR 0008 and ADR 0014.
 
 | Command                            | What it checks                                                                                                                                                |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |

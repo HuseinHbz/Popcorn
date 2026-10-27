@@ -68,16 +68,24 @@ Option C:
 ## Consequences
 
 - **Cost:** about one upgrade PR a week to review. The `freshness` job adds about 20 s of CI.
-- **Risk:** ESLint 9 no longer receives upstream fixes. It runs only on our own code in CI, so
-  exposure is low, and moving to 10 is gated on the ecosystem (see Revisit).
+- **Risk:**
+  - ESLint 9 no longer receives upstream fixes. It runs only on our own code in CI, so exposure
+    is low, and moving to 10 is gated on the ecosystem (see Revisit).
+  - The `freshness` job runs on every push and depends on three foreign endpoints: nodejs.org
+    (`dist/index.json`), raw.githubusercontent.com (nodejs/Release `schedule.json`) and the npm
+    registry's advisory API. An outage of any of them turns CI red for a change that did not
+    cause it; the job is separate, so the other gates still report, and re-running it is the
+    remedy.
 - **Reversibility:** high. Every choice is a version number or a config line, and a downgrade is
   one commit.
 - **Iran fit:**
-  - Installs work from a registry mirror (`pnpm config set registry <mirror>`).
-  - Corepack fetches pnpm from the same npm registry, so a mirror covers it too.
-  - Node itself (`actions/setup-node`, nodejs.org) and the Playwright browsers (Microsoft's CDN)
-    are foreign downloads. GitHub-hosted CI is fine today, but a self-hosted CI in Iran must
-    mirror both (Phase 5 runbook).
+  - Installs work from a registry mirror (`pnpm config set registry <mirror>`). Corepack does not
+    read pnpm's setting: it downloads pnpm from `COREPACK_NPM_REGISTRY`, which must point at the
+    same mirror. The sha512 pin still verifies whatever the mirror serves.
+  - These are foreign downloads, fine on GitHub-hosted CI today; a self-hosted CI in Iran must
+    mirror or replace each of them (Phase 5 runbook): Node itself (`actions/setup-node`,
+    nodejs.org), the Playwright browsers (Microsoft's CDN), the Chrome that Lighthouse CI uses
+    (preinstalled on GitHub's runners), and the three endpoints of the `freshness` job above.
 
 ## Revisit when
 
