@@ -62,6 +62,8 @@ Constraints:
     (`.github/ci-tools/gitleaks.toml`, the built-in rules only), and CI fails on a
     `.gitleaks.toml` or `.semgrepignore` in the repository or an inline suppression comment
     in any commit. The only exceptions are `.gitleaksignore` fingerprints, each with a reason.
+  - `.github/CODEOWNERS` routes changes to these controls (CI, scanner exceptions, dependency
+    settings, lint rules, security headers, environment rules, the risk register) to the owner.
   - Dependabot covers npm, GitHub Actions and both compose files, after a 3-day cooldown.
 
 ## Consequences
