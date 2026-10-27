@@ -3,60 +3,80 @@
 - Status: Proposed
 - Date: 2026-10-27
 - Score: pending independent review (rubric: docs/project-plan.md §3)
-- Amends: ADR 0008 (MinIO in the service list)
+- Proposes an amendment to: ADR 0008 (MinIO in the service list)
 
 ## Context
 
 The platform stores menu photos (60+ originals, resized to AVIF/WebP, plan §5) and private
 résumé PDFs (plan §7: private bucket, short-lived links). ADR 0008 and plan §5 name MinIO.
-In Phase 0 the image could not be pulled: `docker pull minio/minio` fails with "repository does
-not exist", because MinIO stopped publishing community images and its community edition is
-source-only and in maintenance mode.
+
+**Trigger, observed 2026-10-26 during Phase 0:**
+
+- `docker pull minio/minio` failed with "pull access denied … repository does not exist".
+- Docker Hub's API answered `object not found` for `minio/minio`.
+- MinIO had stopped publishing community images, and its community edition is source-only.
+- `quay.io/minio/minio` answered HTTP 403 from our build network, so a pinned last image there
+  could not be verified.
 
 Constraints:
 
-- Must speak the S3 API (presigned GET/PUT, private buckets), because the app talks to storage
-  only through an S3 client configured by `S3_ENDPOINT`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`.
-- Must start with one `docker compose up` for every developer and in CI, with no bootstrap scripts.
-- Must reject anonymous access, so local behaviour matches production.
-- Must run on Iranian infrastructure (ADR 0008). Images are pulled through a local registry
-  mirror, and nothing may depend on a foreign SaaS at runtime.
-- Licence must not impose obligations on the restaurant's proprietary code.
+- **S3 API:** presigned GET/PUT and private buckets. The app talks to storage only through an S3
+  client configured by `S3_ENDPOINT`, `S3_ACCESS_KEY` and `S3_SECRET_KEY`.
+- **One command:** `docker compose up` must work for every developer and in CI, with no bootstrap
+  scripts.
+- **Rejects anonymous access,** so local behaviour matches production.
+- **Runs on Iranian infrastructure (ADR 0008).** Images come through a domestic registry mirror,
+  and nothing depends on a foreign SaaS at runtime.
+- **Licence** imposes no obligations on the restaurant's proprietary code.
 
 ## Options considered
 
-| Option                                                 | Pros                                                                                                                                                                                     | Cons                                                                                                                                                                |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. MinIO built from source** into our own image      | Same name and API as the plan                                                                                                                                                            | We would own building, patching and CVE tracking for an upstream that no longer ships images. Community edition is in maintenance. AGPL-3.0.                        |
-| **B. Garage** (AGPL-3.0, Rust)                         | Light; designed for self-hosted, geo-distributed clusters                                                                                                                                | Needs a config file plus a `garage layout assign/apply` bootstrap before the first bucket, so it is not one-command. AGPL. Smaller S3 surface (no bucket policies). |
-| **C. SeaweedFS `weed mini`** (Apache-2.0)              | One container runs master, volume, filer and S3 gateway. Credentials come from env. `-bucket` pre-creates the bucket. Anonymous requests return 403. Actively released (4.51, Oct 2026). | S3 coverage is narrower than AWS (no object lock, partial lifecycle rules). It is a second technology for the team to learn.                                        |
-| **D. Domestic cloud object storage** (e.g. ArvanCloud) | Managed, no ops                                                                                                                                                                          | Not available offline or in CI. Adds a vendor account to local development. Remains a candidate for production.                                                     |
+| Option                                             | Pros                                                                                                                                                                            | Cons                                                                                                                                                                                                 |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A. MinIO built from source into our own image      | Same API and name as the plan                                                                                                                                                   | We would own building, patching and CVE tracking for a project that ships no images. AGPL-3.0.                                                                                                       |
+| B. Last community MinIO image, pinned by digest    | No change for developers                                                                                                                                                        | Frozen forever: no security fixes. Could not even be pulled from our network (403).                                                                                                                  |
+| C. Garage (AGPL-3.0, Rust)                         | Light; built for self-hosted, geo-distributed clusters                                                                                                                          | Needs a config file plus `garage layout assign/apply` before the first bucket, so it is not one command. Smaller S3 surface. AGPL.                                                                   |
+| D. RustFS or Zenko CloudServer (Apache-2.0)        | Single S3 server; permissive licence                                                                                                                                            | Not tested hands-on in Phase 0. RustFS has a short track record. CloudServer is a Node.js service built for the larger Zenko stack. Neither offered a clear advantage over E for a dev-only backend. |
+| **E. SeaweedFS `weed mini` (Apache-2.0)**          | One container (master, volume, filer and S3 gateway). Credentials from env. `-bucket` pre-creates the bucket. Anonymous requests answer 403. Released monthly (4.51, Oct 2026). | Narrower S3 coverage than AWS (no object lock, partial lifecycle). Internal ports are open on the compose network. A second technology to learn.                                                     |
+| F. Domestic cloud object storage (e.g. ArvanCloud) | Managed, no operations                                                                                                                                                          | Not usable offline or in CI. Adds a vendor account to local development. Stays a production candidate.                                                                                               |
+
+Footprint: option E measured about 65 MB RAM idle in one container (`docker stats`, 2026-10-27).
+The other options were not run, so no figures are claimed for them.
 
 ## Decision
 
-Local development and CI use **SeaweedFS `chrislusf/seaweedfs:4.51`** (pinned by digest in
-`docker-compose.dev.yml`), started as `weed mini -dir=/data -bucket=popcorn-media`. It listens on
-`127.0.0.1:8333` and takes credentials from `.env`. CI asserts that anonymous access returns 403.
-
-Application code may only use S3 operations that every candidate backend supports: put/get/delete
-object, presigned GET/PUT, and private buckets. No vendor-specific API is allowed.
-
-Production storage is **not** decided here. Phase 5 chooses between a self-hosted SeaweedFS
-cluster and domestic cloud storage, using the same S3 contract.
+- Local development and CI use **SeaweedFS `chrislusf/seaweedfs:4.51`**, pinned by digest in
+  `docker-compose.dev.yml` and started as `weed mini -dir=/data -bucket=popcorn-media`.
+- Only the S3 port is published, on `127.0.0.1:8333`. Credentials come from `.env`.
+- CI performs a signed PUT/GET round trip and asserts that anonymous reads answer 403.
+- Application code may only use S3 operations every candidate backend supports: put, get and
+  delete object, presigned GET/PUT, and private buckets. No vendor-specific API.
+- Production storage is **not** decided here. Phase 5 chooses between a self-hosted SeaweedFS
+  cluster and domestic cloud storage, under the same S3 contract.
 
 ## Consequences
 
-- **Cost:** none. One extra container (about 100 MB RAM idle).
-- **Risk:** a feature we need later may be missing from SeaweedFS's S3 gateway. This is mitigated
-  by the contract above and by CI exercising the real gateway rather than a mock.
-- **Reversibility:** high. The backend is just an endpoint plus credentials. Swapping it is a
-  `docker-compose.dev.yml` and `.env` change with no application change.
-- **Iran fit:** Apache-2.0, a single image that a domestic registry mirror can host, and no
-  runtime calls abroad.
+- **Cost:** none in licences. One container, about 65 MB RAM idle (measured).
+- **Security trade-off:**
+  - `weed mini`'s master, volume and filer APIs are unauthenticated. They are reachable only from
+    other containers on the compose network, never from the host or the internet.
+  - A single admin S3 identity is acceptable for local development. Production needs per-purpose
+    least-privilege identities (risk register, Phase 5).
+- **Risk:** a feature we need later may be missing from the S3 gateway. This is mitigated by the
+  contract above and by CI exercising the real gateway rather than a mock.
+- **Reversibility:** high. The backend is an endpoint plus credentials. Swapping it is a
+  `docker-compose.dev.yml` and `.env` change, with no application change.
+- **Iran fit:**
+  - Apache-2.0, with no runtime calls abroad.
+  - The pinned digest is pullable through a domestic pull-through mirror (`registry-mirrors` in
+    `daemon.json`, e.g. a self-hosted `registry:2` cache or a domestic cloud mirror).
+  - Fallback if Docker Hub refuses Iranian IPs: keep a `docker save` tarball of the pinned digest
+    in the internal artifact store and `docker load` it.
 
 ## Revisit when
 
-- A required S3 feature (e.g. object lock for compliance, lifecycle expiry for résumés) is not
-  supported by SeaweedFS, or
+- a required S3 feature (e.g. object lock, lifecycle expiry for résumés) is missing from
+  SeaweedFS, or
 - Phase 5 picks a production backend that should be mirrored locally instead, or
-- SeaweedFS stops publishing images or security fixes.
+- SeaweedFS ships no release for 6 months, or leaves a High/Critical CVE in the S3 gateway
+  unpatched for 30 days.
