@@ -41,19 +41,24 @@ for (const { locale, dir, title, switchTo, other, otherDir } of PAGES) {
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(OTHER_TITLE[other]);
     });
 
-    test('renders text in self-hosted Vazirmatn', async ({ page }) => {
+    test('renders text in the self-hosted brand fonts', async ({ page }) => {
       await page.goto(`/${locale}`);
       const fonts = await page.evaluate(async () => {
         await document.fonts.ready;
-        const stack = getComputedStyle(document.body).fontFamily;
+        const familyOf = (selector: string): string =>
+          getComputedStyle(document.querySelector(selector) ?? document.body).fontFamily;
         const loaded = [...document.fonts]
           .filter((face) => face.status === 'loaded')
           .map((face) => face.family.replaceAll('"', ''));
-        return { stack, loaded };
+        return { body: familyOf('body'), heading: familyOf('h1'), loaded };
       });
-      // Both subsets come first in the stack, before any system fallback (ADR 0012).
-      expect(fonts.stack).toMatch(/^"?vazirmatnLatin"?, "?vazirmatnArabic"?,/);
-      expect(fonts.loaded).toContain(locale === 'fa' ? 'vazirmatnArabic' : 'vazirmatnLatin');
+      // Both Vazirmatn subsets lead the body stack, before any system fallback (ADR 0012),
+      // and both load: every page mixes Persian and Latin text (the language link).
+      expect(fonts.body).toMatch(/^"?vazirmatnLatin"?, "?vazirmatnArabic"?,/);
+      expect(fonts.loaded).toEqual(expect.arrayContaining(['vazirmatnLatin', 'vazirmatnArabic']));
+      // Headings: Shippori Mincho for Latin glyphs, then the Persian headline slot.
+      expect(fonts.heading).toMatch(/^"?shipporiMincho"?, "?vazirmatnArabic"?, serif$/);
+      if (locale === 'en') expect(fonts.loaded).toContain('shipporiMincho');
     });
 
     test('has no axe violations', async ({ page }) => {
