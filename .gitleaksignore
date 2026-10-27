@@ -4,3 +4,7 @@
 # A made-up 32-character S3 secret in a unit test of the production env rules
 # (src/shared/config/env.test.ts). The test now builds the value at runtime.
 4e1499313940e6583fabef842685ad75705a2247:src/shared/config/env.test.ts:generic-api-key:18
+
+# The round-4 security scorecard quotes that same made-up test value as evidence that the
+# entry above is fake (docs/scorecards/phase-0/security-foundation-round-4.md, line 85).
+6ef68e156d90ca34be57bd1f7d6ff6a5a2df47f3:docs/scorecards/phase-0/security-foundation-round-4.md:generic-api-key:85
