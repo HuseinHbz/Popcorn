@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import boundaries from 'eslint-plugin-boundaries';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import nextVitals from 'eslint-config-next/core-web-vitals';
@@ -6,30 +8,51 @@ import prettier from 'eslint-config-prettier/flat';
 import tseslint from 'typescript-eslint';
 
 // CLAUDE.md: only design tokens for colour, spacing, radius and font. Bans raw colours
-// (hex, colour functions), Tailwind arbitrary values (`text-[red]`, `w-[13px]`) and
-// inline colour values in style objects (`{ color: 'red' }`).
+// (hex, colour functions) anywhere; Tailwind arbitrary values and properties (`w-[13px]`,
+// `[color:red]`); literal values for colour properties in any object; the 148 named colours
+// in colour-bearing values (`border: '1px solid red'`) and SVG colour attributes; and
+// literal spacing, radius and font values in inline `style` attributes. Dynamic values
+// and CSS custom properties stay allowed.
+const NAMED_COLORS = JSON.parse(
+  readFileSync(new URL('scripts/named-colors.json', import.meta.url), 'utf8'),
+);
+const NAMED_COLOR = `/\\b(?:${NAMED_COLORS.join('|')})\\b/i`;
 const RAW_COLOR = '/#[0-9a-fA-F]{3,8}\\b|\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\\(/';
-const ARBITRARY_VALUE = '/(?:^|\\s)!?-?[a-z][a-z0-9:-]*-\\[[^\\]\\s]+\\]/';
+const ARBITRARY_VALUE =
+  '/(?:^|\\s)!?-?[a-z][a-z0-9:-]*-\\[[^\\]\\s]+\\]|(?:^|\\s)!?(?:[a-z0-9-]+:)*\\[[a-z-]+:[^\\]\\s]+\\]/';
 const COLOR_KEY = '/^(?:background|fill|stroke|[a-zA-Z]*[cC]olor)$/';
+const COLOR_BEARING_KEY =
+  '/(?:background|border|outline|shadow|fill|stroke|caret|decoration|columnrule)/i';
+const SIZE_KEY =
+  '/^(?:(?:margin|padding|inset|scrollMargin|scrollPadding)[A-Za-z]*|(?:row|column)?[gG]ap|top|right|bottom|left|border[A-Za-z]*Radius|font[A-Za-z]*|lineHeight|letterSpacing)$/';
+const SVG_COLOR_ATTRIBUTE = '/^(?:fill|stroke|color|stopColor|floodColor|lightingColor)$/';
+const keyMatches = (pattern) => `:matches([key.name=${pattern}], [key.value=${pattern}])`;
+const VALUE = ':matches(Literal, TemplateLiteral)';
 const TOKEN_SYNTAX = [
-  { selector: `Literal[value=${RAW_COLOR}]`, message: 'Use a design token, not a raw colour.' },
-  {
-    selector: `TemplateElement[value.raw=${RAW_COLOR}]`,
-    message: 'Use a design token, not a raw colour.',
-  },
-  {
-    selector: `Literal[value=${ARBITRARY_VALUE}]`,
-    message: 'Use a theme token, not a Tailwind arbitrary value.',
-  },
-  {
-    selector: `TemplateElement[value.raw=${ARBITRARY_VALUE}]`,
-    message: 'Use a theme token, not a Tailwind arbitrary value.',
-  },
-  {
-    selector: `Property[key.name=${COLOR_KEY}] > Literal`,
-    message: 'Use a design-token class, not an inline colour value.',
-  },
-];
+  [`Literal[value=${RAW_COLOR}]`, 'Use a design token, not a raw colour.'],
+  [`TemplateElement[value.raw=${RAW_COLOR}]`, 'Use a design token, not a raw colour.'],
+  [`Literal[value=${ARBITRARY_VALUE}]`, 'Use a theme token, not a Tailwind arbitrary value.'],
+  [
+    `TemplateElement[value.raw=${ARBITRARY_VALUE}]`,
+    'Use a theme token, not a Tailwind arbitrary value.',
+  ],
+  [
+    `Property${keyMatches(COLOR_KEY)} > .value${VALUE}`,
+    'Use a design-token class, not an inline colour value.',
+  ],
+  [
+    `Property${keyMatches(COLOR_BEARING_KEY)}:not(${keyMatches(COLOR_KEY)}) > .value:matches(Literal[value=${NAMED_COLOR}], TemplateLiteral:has(TemplateElement[value.raw=${NAMED_COLOR}]))`,
+    'Use a design token, not a named colour.',
+  ],
+  [
+    `JSXAttribute[name.name=${SVG_COLOR_ATTRIBUTE}] Literal[value=${NAMED_COLOR}]`,
+    'Use a design token, not a named colour.',
+  ],
+  [
+    `JSXAttribute[name.name='style'] Property${keyMatches(SIZE_KEY)} > .value:matches(Literal, TemplateLiteral[expressions.length=0])`,
+    'Use a spacing, radius or font token class, not an inline value.',
+  ],
+].map(([selector, message]) => ({ selector, message }));
 
 // CLAUDE.md: every user-facing string goes through next-intl. JSX text, wrapped or not,
 // is covered by react/jsx-no-literals (noStrings); these catch literal text in user-facing

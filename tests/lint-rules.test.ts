@@ -135,6 +135,11 @@ describe('code rules', () => {
     expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(3);
   });
 
+  it('rejects quoted, templated, named and SVG colours and inline spacing, radius and font', () => {
+    // Exact lines, and the dynamic values and keywords that stay allowed, are in the fixture.
+    expect(rulesIn('shared/ui/token-bypasses.tsx')).toHaveLength(13);
+  });
+
   it('rejects user-facing text that bypasses next-intl', () => {
     const rules = rulesIn('shared/ui/literal-text.tsx');
     expect(rules).toContain('react/jsx-no-literals');
