@@ -31,6 +31,23 @@ const TOKEN_SYNTAX = [
   },
 ];
 
+// CLAUDE.md: every user-facing string goes through next-intl. JSX text is covered by
+// react/jsx-no-literals; these catch literal text in user-facing attributes.
+const TEXT_ATTRIBUTE =
+  '/^(?:alt|title|placeholder|label|aria-label|aria-description|aria-placeholder|aria-roledescription|aria-valuetext)$/';
+const I18N_MESSAGE = 'User-facing text comes from next-intl, not a literal.';
+const I18N_SYNTAX = [
+  { selector: `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > Literal`, message: I18N_MESSAGE },
+  {
+    selector: `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > Literal`,
+    message: I18N_MESSAGE,
+  },
+  {
+    selector: `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > TemplateLiteral`,
+    message: I18N_MESSAGE,
+  },
+];
+
 // Pure code reads no ambient state: the clock and randomness are passed in.
 const PURE_MESSAGE = '`domain/` and `shared/lib` must stay pure: pass the clock or randomness in.';
 const PURE_SYNTAX = [
@@ -184,7 +201,8 @@ export default defineConfig([
           policies: boundaryPolicies,
         },
       ],
-      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX],
+      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...I18N_SYNTAX],
+      'react/jsx-no-literals': ['error', { ignoreProps: true }],
     },
   },
   {
@@ -197,7 +215,7 @@ export default defineConfig([
     ],
     ignores: ['**/*.test.ts'],
     rules: {
-      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...PURE_SYNTAX],
+      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...I18N_SYNTAX, ...PURE_SYNTAX],
       'no-restricted-globals': [
         'error',
         ...IMPURE_GLOBALS.map((name) => ({

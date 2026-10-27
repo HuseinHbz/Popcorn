@@ -97,6 +97,12 @@ describe('code rules', () => {
     expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(3);
   });
 
+  it('rejects user-facing text that bypasses next-intl', () => {
+    const rules = rulesIn('shared/ui/literal-text.tsx');
+    expect(rules).toContain('react/jsx-no-literals');
+    expect(rules).toContain('no-restricted-syntax');
+  });
+
   it('ignores inline eslint-disable and still reports the violation it hides', () => {
     const messages = findings.get('shared/ui/inline-disable.ts') ?? [];
     expect(messages).toContainEqual({ ruleId: null, severity: 1 });
