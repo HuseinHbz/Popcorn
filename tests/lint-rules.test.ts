@@ -16,7 +16,7 @@ const findings = new Map<string, Finding[]>();
 
 beforeAll(async () => {
   const eslint = new ESLint({ cwd: root, ignore: false });
-  const results = await eslint.lintFiles([fixture('**/*.ts')]);
+  const results = await eslint.lintFiles([fixture('**/*.{ts,tsx}')]);
   for (const result of results) {
     const key = result.filePath.slice(result.filePath.indexOf('tests/fixtures/src/') + 19);
     findings.set(
@@ -63,6 +63,13 @@ describe('pure code', () => {
   it('rejects Node built-ins in shared/lib', () => {
     expect(rulesIn('shared/lib/impure.ts')).toContain('boundaries/dependencies');
   });
+
+  it.each(['modules/orders/domain/imports-package.ts', 'shared/lib/imports-package.ts'])(
+    'rejects npm packages in %s',
+    (path) => {
+      expect(rulesIn(path)).toContain('boundaries/dependencies');
+    },
+  );
 });
 
 describe('code rules', () => {
@@ -85,5 +92,9 @@ describe('code rules', () => {
 
   it('rejects functions longer than 40 lines', () => {
     expect(rulesIn('shared/ui/long-function.ts')).toContain('max-lines-per-function');
+  });
+
+  it('rejects files longer than 300 lines', () => {
+    expect(rulesIn('shared/ui/long-file.ts')).toContain('max-lines');
   });
 });
