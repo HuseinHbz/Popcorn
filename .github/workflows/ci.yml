@@ -180,6 +180,11 @@ jobs:
         run: |
           docker compose exec -T redis sh -c 'unset REDISCLI_AUTH; redis-cli ping' | grep -q NOAUTH
           docker compose exec -T redis sh -c 'REDISCLI_AUTH=wrong redis-cli ping 2>&1' | grep -q WRONGPASS
+      - name: Object storage sends no telemetry and is isolated from the other containers
+        run: |
+          docker compose config --format json \
+            | jq -e '.services.objectstore.command | index("-master.telemetry=false") != null'
+          ! docker compose exec -T redis wget -q -T 3 -O /dev/null http://objectstore:8888/
       - name: Object storage rejects anonymous access
         run: test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8333/popcorn-media)" = 403
       - name: Object storage round trip (signed PUT and GET; anonymous PUT and GET refused)

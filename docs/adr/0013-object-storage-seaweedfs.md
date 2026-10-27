@@ -40,7 +40,8 @@ Constraints:
 | **E. SeaweedFS `weed mini` (Apache-2.0)**          | One container (master, volume, filer and S3 gateway). Credentials from env. `-bucket` pre-creates the bucket. Anonymous requests answer 403. Released monthly (4.51, Oct 2026). | Narrower S3 coverage than AWS (no object lock, partial lifecycle). Internal ports are open on the compose network. A second technology to learn.                                                     |
 | F. Domestic cloud object storage (e.g. ArvanCloud) | Managed, no operations                                                                                                                                                          | Not usable offline or in CI. Adds a vendor account to local development. Stays a production candidate.                                                                                               |
 
-Footprint: option E measured about 65 MB RAM idle in one container (`docker stats`, 2026-10-27).
+Footprint: option E measured about 70 MB RAM idle with an empty store and about 135 MB once it
+holds data and has been restarted, in one container (`docker stats`, 2026-10-27).
 The other options were not run, so no figures are claimed for them.
 
 ## Decision
@@ -48,7 +49,11 @@ The other options were not run, so no figures are claimed for them.
 - Local development and CI use **SeaweedFS `chrislusf/seaweedfs:4.51`**, pinned by digest in
   `docker-compose.dev.yml` and started as `weed mini -dir=/data -bucket=popcorn-media`.
 - Only the S3 port is published, on `127.0.0.1:8333`. Credentials come from `.env`.
-- CI performs a signed PUT/GET round trip and asserts that anonymous reads answer 403.
+- Everything `weed mini` starts besides S3 is turned off where it can be: telemetry
+  (`-master.telemetry=false`), WebDAV, the Iceberg and Lance catalogs, and the admin UI. The
+  service runs on its own compose network, so no other container reaches its internal APIs.
+- CI performs a signed PUT/GET round trip, asserts that anonymous reads and writes answer 403,
+  that telemetry is off, and that another container cannot reach the filer.
 - Application code may only use S3 operations every candidate backend supports: put, get and
   delete object, presigned GET/PUT, and private buckets. No vendor-specific API.
 - Production storage is **not** decided here. Phase 5 chooses between a self-hosted SeaweedFS
@@ -56,10 +61,12 @@ The other options were not run, so no figures are claimed for them.
 
 ## Consequences
 
-- **Cost:** none in licences. One container, about 65 MB RAM idle (measured).
+- **Cost:** none in licences. One container, about 70–135 MB RAM idle (measured).
 - **Security trade-off:**
-  - `weed mini`'s master, volume and filer APIs are unauthenticated. They are reachable only from
-    other containers on the compose network, never from the host or the internet.
+  - `weed mini`'s master, volume, filer and filer IAM APIs are unauthenticated; the IAM API can
+    create S3 users and policies. They are reachable only inside the object store's own compose
+    network, never from the host, the internet or the other services. Production needs JWT
+    signing for them (`security.toml`; risk register, Phase 5).
   - A single admin S3 identity is acceptable for local development. Production needs per-purpose
     least-privilege identities (risk register, Phase 5).
 - **Risk:** a feature we need later may be missing from the S3 gateway. This is mitigated by the
@@ -67,7 +74,8 @@ The other options were not run, so no figures are claimed for them.
 - **Reversibility:** high. The backend is an endpoint plus credentials. Swapping it is a
   `docker-compose.dev.yml` and `.env` change, with no application change.
 - **Iran fit:**
-  - Apache-2.0, with no runtime calls abroad.
+  - Apache-2.0. `weed mini` reports anonymous statistics to `telemetry.seaweedfs.com` by
+    default; it is turned off, so there are no runtime calls abroad.
   - The pinned digest is pullable through a domestic pull-through mirror (`registry-mirrors` in
     `daemon.json`, e.g. a self-hosted `registry:2` cache or a domestic cloud mirror).
   - Fallback if Docker Hub refuses Iranian IPs: keep a `docker save` tarball of the pinned digest
