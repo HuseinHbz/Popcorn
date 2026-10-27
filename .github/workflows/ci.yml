@@ -159,26 +159,36 @@ jobs:
         run: docker compose exec -T postgres psql -U popcorn -d popcorn -tAc "select 1 from pg_extension where extname = 'btree_gist'" | grep -qx 1
       # Auth checks connect over the compose network like the app will; inside the
       # container the official image trusts 127.0.0.1, which would prove nothing.
-      - name: Postgres rejects a wrong password
+      - name: Postgres rejects a wrong or missing password, for both roles
         run: |
-          ! docker compose run --rm --no-deps -e PGPASSWORD=wrong --entrypoint psql postgres \
-            -h postgres -U popcorn_app -d popcorn -c 'select 1'
+          for user in popcorn popcorn_app; do
+            for password in wrong ''; do
+              # Must fail, and for the right reason (not, say, an unreachable host).
+              output=$(docker compose run --rm --no-deps -T -e PGPASSWORD="$password" \
+                --entrypoint psql postgres -h postgres -U "$user" -d popcorn -w -c 'select 1' 2>&1) \
+                && exit 1
+              grep -qE 'password authentication failed|no password supplied' <<<"$output"
+            done
+          done
       - name: App role is not a superuser and cannot create in public
         run: |
           docker compose run --rm --no-deps -e PGPASSWORD=change-me-too --entrypoint psql postgres \
             -h postgres -U popcorn_app -d popcorn -tAc \
             "select rolsuper or has_schema_privilege('public', 'CREATE') from pg_roles where rolname = current_user" \
             | grep -qx f
-      - name: Redis requires a password
-        run: docker compose exec -T redis sh -c 'unset REDISCLI_AUTH; redis-cli ping' | grep -q NOAUTH
+      - name: Redis rejects a missing or wrong password
+        run: |
+          docker compose exec -T redis sh -c 'unset REDISCLI_AUTH; redis-cli ping' | grep -q NOAUTH
+          docker compose exec -T redis sh -c 'REDISCLI_AUTH=wrong redis-cli ping 2>&1' | grep -q WRONGPASS
       - name: Object storage rejects anonymous access
         run: test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8333/popcorn-media)" = 403
-      - name: Object storage round trip (signed PUT and GET; anonymous GET refused)
+      - name: Object storage round trip (signed PUT and GET; anonymous PUT and GET refused)
         run: |
           set -a; . ./.env; set +a
           object=http://127.0.0.1:8333/${S3_BUCKET:-popcorn-media}/ci-probe.txt
           sign=(--aws-sigv4 'aws:amz:us-east-1:s3' --user "$S3_ACCESS_KEY:$S3_SECRET_KEY")
           echo popcorn | curl -sf "${sign[@]}" -X PUT --data-binary @- "$object"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X PUT --data-binary x "$object")" = 403
           test "$(curl -sf "${sign[@]}" "$object")" = popcorn
           test "$(curl -s -o /dev/null -w '%{http_code}' "$object")" = 403
       - if: always()
