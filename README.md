@@ -10,13 +10,13 @@ Phase 0 — foundation: toolchain, local services, CI and a bilingual RTL hello 
 
 ## Local setup
 
-Requirements: Node 22 LTS (`.nvmrc`), pnpm 10 (`corepack enable`), Docker with Compose v2.
+Requirements: Node 22.23.4 (`.nvmrc`), pnpm 10.34.9 via `corepack enable`, Docker with Compose v2.
 
 ```bash
 pnpm install                 # also installs Git hooks (Husky)
 cp .env.example .env         # replace every "change-me"
 docker compose up -d --wait  # Postgres 17 (+btree_gist), Redis 7, S3 storage (SeaweedFS)
-pnpm dev                     # http://localhost:3000 → /fa
+pnpm dev                     # http://127.0.0.1:3000 → /fa (loopback only)
 ```
 
 Behind restricted networks, point pnpm at a local npm mirror (`pnpm config set registry <mirror>`)
@@ -33,9 +33,9 @@ and Docker at a registry mirror (`registry-mirrors` in `/etc/docker/daemon.json`
 
 | Service    | Address (127.0.0.1 only)                        |
 | ---------- | ----------------------------------------------- |
-| PostgreSQL | `localhost:5432`                                |
-| Redis      | `localhost:6379`                                |
-| S3 API     | `http://localhost:8333`, bucket `popcorn-media` |
+| PostgreSQL | `127.0.0.1:5432`                                |
+| Redis      | `127.0.0.1:6379`                                |
+| S3 API     | `http://127.0.0.1:8333`, bucket `popcorn-media` |
 
 CI (`.github/workflows/ci.yml`) runs all of the above on every push, plus Conventional Commit checks and a Compose health check.
 
