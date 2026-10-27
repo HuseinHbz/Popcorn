@@ -1,11 +1,10 @@
 import '../globals.css';
 
 import type { Metadata } from 'next';
-import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
-import { directionOf, routing } from '@/shared/i18n/routing';
-import { shipporiMincho, vazirmatnArabic, vazirmatnLatin } from '@/shared/ui/fonts';
+import { routing } from '@/shared/i18n/routing';
+import { Document } from '@/shared/ui/document';
 
 export function generateStaticParams(): Array<{ locale: string }> {
   return routing.locales.map((locale) => ({ locale }));
@@ -16,22 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('title'), description: t('description') };
 }
 
-export default async function LocaleLayout({ children }: LayoutProps<'/[locale]'>) {
-  // The request config (shared/i18n/request.ts) resolves the locale and falls back to the
-  // default for an unknown first segment (`/t/…`, `/api/…`); the page below answers 404,
-  // so the 404 page is localized and accessible.
-  const locale = await getLocale();
-
-  return (
-    <html
-      lang={locale}
-      dir={directionOf(locale)}
-      className={`${vazirmatnLatin.variable} ${vazirmatnArabic.variable} ${shipporiMincho.variable}`}
-    >
-      <body className="bg-washi font-sans text-ink antialiased">
-        {/* Client components only need the locale for now; no message catalogue is shipped. */}
-        <NextIntlClientProvider messages={null}>{children}</NextIntlClientProvider>
-      </body>
-    </html>
-  );
+export default function LocaleLayout({ children }: LayoutProps<'/[locale]'>) {
+  // For an unknown first segment with more segments (`/t/…`, `/api/…`) the document falls
+  // back to the default locale, and the page below answers a localized 404.
+  return <Document>{children}</Document>;
 }
