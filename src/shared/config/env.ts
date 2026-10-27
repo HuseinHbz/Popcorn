@@ -1,9 +1,12 @@
 import { z } from 'zod';
 
-/** Any spelling of the `.env.example` placeholder: change-me, CHANGE_ME, ChangeMe. */
-const PLACEHOLDER = /change[-_ ]?me/i;
-/** Production S3 secrets are generated, so a short one is a typo or a test value. */
-const MIN_PRODUCTION_SECRET = 32;
+/** Any spelling of the `.env.example` placeholder: change-me, CHANGE_ME, ChangeMe, change.me. */
+const PLACEHOLDER = /change[-_ .]?me/i;
+/** Production secrets are generated, so a short one is a typo or a test value. */
+const MIN_S3_SECRET = 32;
+const MIN_SERVICE_PASSWORD = 16;
+/** Hosts reached without leaving the machine or the private container network. */
+const LOCAL_HOST = /^(?:localhost|127(?:\.\d{1,3}){3}|\[::1\]|[a-z0-9-]+)$/i;
 
 const url = (protocols: RegExp) => z.url({ protocol: protocols });
 
@@ -32,17 +35,40 @@ export class EnvError extends Error {
   }
 }
 
+/** `%63hange-me` must not slip past the placeholder check; malformed escapes stay as they are. */
+function decoded(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function passwordProblem(key: 'DATABASE_URL' | 'REDIS_URL', value: string): string | undefined {
+  const password = decoded(new URL(value).password);
+  if (password === '') return `${key}: has no password`;
+  if (password.length < MIN_SERVICE_PASSWORD) {
+    return `${key}: password shorter than ${String(MIN_SERVICE_PASSWORD)} characters`;
+  }
+  return undefined;
+}
+
 /** Rules that only production enforces: local services run with throwaway credentials. */
 function productionProblems(env: Env): string[] {
   if (env.APP_ENV !== 'production') return [];
   const problems = Object.entries(env)
-    .filter(([, value]) => PLACEHOLDER.test(value))
+    .filter(([, value]) => PLACEHOLDER.test(decoded(value)))
     .map(([key]) => `${key}: still contains a "change-me" placeholder`);
   for (const key of ['DATABASE_URL', 'REDIS_URL'] as const) {
-    if (new URL(env[key]).password === '') problems.push(`${key}: has no password`);
+    const problem = passwordProblem(key, env[key]);
+    if (problem) problems.push(problem);
   }
-  if (env.S3_SECRET_KEY.length < MIN_PRODUCTION_SECRET) {
-    problems.push(`S3_SECRET_KEY: shorter than ${String(MIN_PRODUCTION_SECRET)} characters`);
+  if (env.S3_SECRET_KEY.trim().length < MIN_S3_SECRET) {
+    problems.push(`S3_SECRET_KEY: shorter than ${String(MIN_S3_SECRET)} characters`);
+  }
+  const s3 = new URL(env.S3_ENDPOINT);
+  if (s3.protocol !== 'https:' && !LOCAL_HOST.test(s3.hostname)) {
+    problems.push('S3_ENDPOINT: must use https unless the host is local');
   }
   return problems;
 }
