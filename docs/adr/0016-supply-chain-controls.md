@@ -40,6 +40,8 @@ Constraints:
   - The lockfile's integrity hashes are verified on every install (`--frozen-lockfile`).
   - Actions are pinned by commit SHA. Service and CI-tool images are pinned by digest
     (`docker-compose.dev.yml`, `.github/ci-tools/compose.yaml`).
+  - pnpm itself is pinned by the sha512 of its tarball in `packageManager`, and Corepack
+    verifies it locally and in CI.
 - **Audit gates (CI `quality`):**
   - `pnpm audit --audit-level=high`. Accepted exceptions are exactly the register's entries,
     enforced by `tests/risk-register.test.ts`.

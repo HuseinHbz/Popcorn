@@ -44,8 +44,9 @@ Option C:
   `strictTypeChecked`) · Tailwind 4.3 · next-intl 4.14 · Zod 4.6 · Vitest 5 · Playwright 1.63.
   Exact pins (`.npmrc` `save-exact`); upgrades arrive as Dependabot PRs (ADR 0016).
 - **Runtime:** Node 22.23.4 (`.nvmrc` exact, `engines >=22.23.4`) and pnpm 10.34.9
-  (`packageManager`, installed via Corepack). Both are the latest security releases of their
-  lines.
+  (`packageManager`, with the tarball's sha512). Both are the latest security releases of their
+  lines. Corepack installs pnpm locally and in CI and refuses a tarball whose hash differs
+  (checked with a tampered hash: "Mismatch hashes").
   - The CI `freshness` job (every push, and weekly) fails when nodejs.org lists a newer Node
     security release in the pinned major line, or when that line has reached end of life
     (`scripts/check-node-version.ts`, reading nodejs/Release `schedule.json`). It warns 90 days
@@ -80,5 +81,7 @@ Option C:
 - `typescript-eslint` supports TypeScript 7 **and** `eslint-config-next` supports ESLint 10, or
 - an ESLint 9 advisory of High severity has no backport within 30 days, or
 - CI moves to self-hosted runners: mirror Node, pnpm and the Playwright browsers first, or
+- the Node line moves past 24: Corepack is no longer bundled from Node 25, so install it
+  explicitly (`npm install -g corepack`) or choose another verified install, or
 - the `freshness` job warns that Node 22 is within 90 days of end of life (from 2027-01-30):
   move to the next LTS line.
