@@ -3,8 +3,10 @@
 - Round 1 scorecard: [`foundation-round-1.md`](foundation-round-1.md). The reviewer session hit a
   usage limit before writing the ADR scores and the "Required fixes" list. Every deduction in the
   rubric table is addressed below.
-- Security review: [`security-foundation.md`](security-foundation.md), Gate Pass. Its Medium and
-  Low findings were fixed in `d0d1e50`…`dbe483c` before round 1 finished.
+- Security review: [`security-foundation.md`](security-foundation.md), Gate Pass. Its two Mediums and
+  L2–L5 and L7 were fixed in `d0d1e50`…`dbe483c`. L1 (nonce CSP) is a tracked deferral to Phase 2.
+  L6 and L8 were only partly fixed then (see the round-2 security review); their remaining parts are
+  fixed or tracked as deferred controls in `docs/security/risk-register.md`.
 - Per CLAUDE.md workflow step 6, the deductions are fixed, not argued. The one exception (D-16) is
   a history rewrite that needs the product owner's approval.
 

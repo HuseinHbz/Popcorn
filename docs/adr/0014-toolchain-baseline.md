@@ -42,9 +42,12 @@ system handling payments.
 
 **Versions** (exact pins via `.npmrc` `save-exact`; upgrades are explicit PRs from Dependabot):
 Next.js 16.4 · React 19.3 · TypeScript 6.0 · ESLint 9.39 (flat config, `strictTypeChecked`) ·
-Tailwind 4.3 · next-intl 4.14 · Vitest 5 · Playwright 1.63 · pnpm 10.28 · Node 22.22.1
-(`.nvmrc` exact, `engines >=22.22.1` because `lint-staged` requires it). `engine-strict` stays
-off: it applies to every transitive dependency and would block installs over patch versions.
+Tailwind 4.3 · next-intl 4.14 · Vitest 5 · Playwright 1.63 · pnpm 10.34.9 · Node 22.23.4
+(`.nvmrc` exact, `engines` to match). Both are the latest security releases of their lines;
+pnpm 10.28 carried known High advisories in the package manager itself, which `pnpm audit` does not
+check. Dependabot does not track `.nvmrc`, so the weekly CI run fails when Node publishes a newer
+security release in the pinned major line (`scripts/check-node-version.ts`). `engine-strict`
+stays off: it applies to every transitive dependency and would block installs over patch versions.
 Zod and other runtime libraries are added in the phase that first uses them.
 
 **Next.js 16 conventions:** `src/proxy.ts` handles locale routing. The locale is read through
@@ -79,12 +82,17 @@ load.
 **Supply chain:**
 
 - `pnpm audit --audit-level=high` blocks CI. Accepted advisories live in
-  `docs/security/risk-register.md`, with an expiry.
+  `docs/security/risk-register.md` with an expiry, and CI fails once a review date passes. Because
+  `ignoreGhsas` applies to every copy of a package, a second gate requires zero High/Critical in
+  production dependencies with no exceptions (`pnpm audit --prod`). CI also runs weekly, so new
+  advisories surface between pushes.
+- `strictDepBuilds`: an install fails if a dependency wants to run an unapproved build script.
 - `minimumReleaseAge: 1440` (24 hours) is set in `pnpm-workspace.yaml`. A 3-day window was tried
   first. It also applies to versions already in the lockfile, so it blocked routine dependency
   changes whenever a transitive optional dependency had shipped in the last few days.
-- Actions and images are pinned by SHA or digest.
-- Gitleaks and Semgrep run in CI.
+- Actions and images are pinned by SHA or digest, including the CI tool images
+  (`.github/ci-tools/compose.yaml`), which Dependabot updates after a 3-day cooldown.
+- Gitleaks and Semgrep run in CI against a read-only mount of the repository.
 
 ## Consequences
 
@@ -97,8 +105,9 @@ load.
 - **Reversibility:** high. Every choice is configuration. Moving to TypeScript 7 or ESLint 10 is a
   dependency bump plus re-running the rule fixtures.
 - **Iran fit:** fonts and every runtime asset are self-hosted. Installs work from a registry mirror
-  (`pnpm config set registry`). `minimumReleaseAge` and the pinned digests protect against poisoned
-  packages arriving through a mirror.
+  (`pnpm config set registry`). Limits: the lockfile's integrity hashes (and digests for images)
+  stop a mirror from swapping the bytes of a version we already locked. `minimumReleaseAge` only
+  delays adopting a newly published malicious version; it does not detect one.
 
 ## Revisit when
 
