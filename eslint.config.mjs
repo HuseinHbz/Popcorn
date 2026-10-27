@@ -56,9 +56,9 @@ const TOKEN_SYNTAX = [
 
 // CLAUDE.md: every user-facing string goes through next-intl. JSX text, wrapped or not,
 // is covered by react/jsx-no-literals (noStrings); these catch literal text in user-facing
-// attributes, directly or as a branch of `?:`, `||`, `&&` or `??` (two levels deep), and
-// the visible `value` of submit, reset and button inputs. A literal passed to a function
-// (a message key) is not text and is allowed.
+// attributes, in the visible `value` of submit, reset and button inputs, and in JSX
+// children, directly or as a branch of `?:`, `||`, `&&` or `??` (two levels deep). A literal
+// passed to a function (a message key) is not text and is allowed.
 const TEXT_ATTRIBUTE =
   '/^(?:alt|title|placeholder|label|aria-label|aria-description|aria-placeholder|aria-roledescription|aria-valuetext)$/';
 const TEXT = ':matches(Literal[value=/\\S/], TemplateLiteral)';
@@ -73,6 +73,10 @@ const I18N_SYNTAX = [
   `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > ${BRANCH} > ${BRANCH} > ${TEXT}`,
   `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > ${TEXT}`,
   `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > JSXExpressionContainer > ${TEXT}`,
+  `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > JSXExpressionContainer > ${BRANCH} > ${TEXT}`,
+  // JSX children: jsx-no-literals sees `{'text'}` but not text inside a branch.
+  `:matches(JSXElement, JSXFragment) > JSXExpressionContainer > ${BRANCH} > ${TEXT}`,
+  `:matches(JSXElement, JSXFragment) > JSXExpressionContainer > ${BRANCH} > ${BRANCH} > ${TEXT}`,
 ].map((selector) => ({ selector, message: I18N_MESSAGE }));
 
 // Pure code reads no ambient state: the clock and randomness are passed in.

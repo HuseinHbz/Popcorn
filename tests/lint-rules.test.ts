@@ -146,9 +146,9 @@ describe('code rules', () => {
     expect(rules).toContain('no-restricted-syntax');
   });
 
-  it('rejects wrapped, conditional and fallback text, and literal button values', () => {
+  it('rejects wrapped, conditional and fallback text in attributes, children and button values', () => {
     // Exact lines, and the allowed cases (message keys, non-text values), are marked in the fixture.
-    expect(rulesIn('shared/ui/literal-text-bypasses.tsx')).toHaveLength(11);
+    expect(rulesIn('shared/ui/literal-text-bypasses.tsx')).toHaveLength(17);
   });
 
   it('ignores inline eslint-disable and still reports the violation it hides', () => {

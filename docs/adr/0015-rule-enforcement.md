@@ -66,9 +66,10 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
     outside `@theme`.
   - SVG files are brand artwork and exempt.
 - **i18n:** `react/jsx-no-literals` with `noStrings` (so `{'text'}` counts too; props ignored),
-  plus a ban on literal `alt`, `title`, `placeholder`, `label` and `aria-*` text, including as a
-  branch of `?:`, `||`, `&&` or `??`, and on the literal `value` of submit, reset and button
-  inputs. A literal passed to a function, such as a message key, is allowed.
+  plus a ban on literal `alt`, `title`, `placeholder`, `label` and `aria-*` text, on the literal
+  `value` of submit, reset and button inputs, and on literal text in JSX children, each also as
+  a branch of `?:`, `||`, `&&` or `??`. A literal passed to a function, such as a message key, is
+  allowed.
 - **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs and raw HTML
   (`dangerouslySetInnerHTML` as a JSX prop, a `createElement` or spread property, and
   `<iframe srcDoc>`) are banned everywhere (Semgrep catches them too, but only in CI). A
