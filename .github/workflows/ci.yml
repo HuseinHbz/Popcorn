@@ -33,11 +33,17 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Commit messages (Conventional Commits)
+        env:
+          BEFORE: ${{ github.event.before }}
         run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            pnpm exec commitlint --last --verbose
-          else
+          # Every commit the push adds: the branch's commits since main, or on main the
+          # pushed range (a brand-new ref has an all-zero "before").
+          if [ "${GITHUB_REF_NAME}" != "main" ]; then
             pnpm exec commitlint --from origin/main --to HEAD --verbose
+          elif [ -n "${BEFORE}" ] && [ "${BEFORE}" != "0000000000000000000000000000000000000000" ]; then
+            pnpm exec commitlint --from "${BEFORE}" --to HEAD --verbose
+          else
+            pnpm exec commitlint --last --verbose
           fi
       - name: Dependency audit (accepted risks in docs/security/risk-register.md)
         run: pnpm audit --audit-level=high
