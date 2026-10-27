@@ -7,6 +7,13 @@ import { routing } from '@/shared/i18n/routing';
 
 const BRANDS = ['nakaya', 'emCafe', 'izakaya'] as const;
 
+/**
+ * Only the locales from generateStaticParams exist. An unknown first segment the proxy skips
+ * (`/api`, `/robots.txt`, `/x.png`) is a 404 that is not generated and cached on demand;
+ * otherwise it was stored with `s-maxage=31536000`.
+ */
+export const dynamicParams = false;
+
 export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();

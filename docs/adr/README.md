@@ -19,5 +19,6 @@
 | [0015](0015-rule-enforcement.md)         | Enforce the engineering rules with tooling, proven by tests             | Proposed | pending review |
 | [0016](0016-supply-chain-controls.md)    | Supply-chain controls for dependencies, CI and images                   | Proposed | pending review |
 | [0017](0017-font-delivery.md)            | Font delivery — vendored static subsets, no metric fallback, Peyda slot | Proposed | pending review |
+| [0018](0018-not-found-handling.md)       | Not-found handling — localized 404s that are never cached               | Proposed | pending review |
 
 An ADR below 98 stays `Proposed`; its "Revisit when" lists what is needed to reach 98.

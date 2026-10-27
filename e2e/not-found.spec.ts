@@ -7,13 +7,19 @@ const CASES = [
   // Not a locale: rendered in the default locale (Persian).
   { path: '/t/no-such-table', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
   { path: '/api/no-such-endpoint', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
+  // Single segments the locale proxy skips: the global 404 (src/app/global-not-found.tsx).
+  { path: '/api', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
+  { path: '/robots.txt', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
+  { path: '/no-such-image.png', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
 ] as const;
 
 for (const { path, lang, dir, title } of CASES) {
   test.describe(`404 at ${path}`, () => {
-    test('is localized, sets lang and dir, and answers 404', async ({ page }) => {
+    test('is localized, sets lang and dir, answers 404 and is not cached', async ({ page }) => {
       const response = await page.goto(path);
       expect(response?.status()).toBe(404);
+      // A cached 404 would outlive a route added later (e.g. robots.txt in Phase 5).
+      expect(response?.headers()['cache-control']).toContain('no-store');
       const html = page.locator('html');
       await expect(html).toHaveAttribute('lang', lang);
       await expect(html).toHaveAttribute('dir', dir);
