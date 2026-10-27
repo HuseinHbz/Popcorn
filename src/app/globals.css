@@ -18,6 +18,13 @@
 /* Font families come from next/font (src/shared/ui/fonts), exposed as CSS variables. */
 @theme inline {
   --font-sans: var(--font-vazirmatn-latin), var(--font-vazirmatn-arabic), system-ui, sans-serif;
+  /* Latin glyphs in Shippori Mincho; Persian glyphs fall through to the headline slot. */
+  --font-display: var(--font-shippori-mincho), var(--font-heading-fa), serif;
+}
+
+:root {
+  /* Persian headline slot: Peyda once licensed (ADR 0012); Vazirmatn until then. */
+  --font-heading-fa: var(--font-vazirmatn-arabic);
 }
 
 @media (prefers-reduced-motion: reduce) {

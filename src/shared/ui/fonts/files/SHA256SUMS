@@ -1,6 +1,8 @@
-# SHA-256 of the vendored files; identical to @fontsource/vazirmatn@5.3.0 (OFL-1.1).
-# Verify: cd src/shared/ui/fonts/files && grep -v '^#' SHA256SUMS | sha256sum -c
+# SHA-256 of the vendored files (OFL-1.1); identical to @fontsource/vazirmatn 5.3.0 and
+# @fontsource/shippori-mincho 5.3.0. Verify: grep -v '^#' SHA256SUMS | sha256sum -c
+e1351ed30eb311d8eaeb3d6f915f1035ab359e767c73510f73cc8d43a7c63822  OFL-shippori-mincho.txt
 e6f4ce7b6c830d5a25a4f8ac777c267cd7d3c180bc2a7150ca57cbb9b280c4b7  OFL-vazirmatn.txt
+65624096ca9a30ccc9a32bb915fb5a4dd9052e571b342ece09ef2f20a682862f  shippori-mincho-latin-400-normal.woff2
 e31830d3a52e0259b176326385d82bc469581a9898046300de46e5c00f6b7064  vazirmatn-arabic-400-normal.woff2
 aa79f9419fa0f5efcf301158b7405d188c4d434c86c32efad1e8669752feb344  vazirmatn-arabic-700-normal.woff2
 a650d62e37f036d53367b383e7c723c2efd426baf74ee8ccb95b634974955f49  vazirmatn-latin-400-normal.woff2

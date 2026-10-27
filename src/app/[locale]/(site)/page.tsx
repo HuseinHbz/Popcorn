@@ -12,7 +12,7 @@ export default async function HomePage() {
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-10 px-6 py-24">
       <header className="flex flex-col gap-4">
         <p className="text-sm tracking-wide text-stone">{t('eyebrow')}</p>
-        <h1 className="text-5xl font-bold">{t('title')}</h1>
+        <h1 className="font-display text-5xl">{t('title')}</h1>
         <p className="text-lg text-stone">{t('lead')}</p>
       </header>
       <section aria-labelledby="brands-heading" className="border-t border-kin pt-6">

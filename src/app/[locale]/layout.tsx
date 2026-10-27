@@ -6,7 +6,7 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
 import { directionOf, routing } from '@/shared/i18n/routing';
-import { vazirmatnArabic, vazirmatnLatin } from '@/shared/ui/fonts';
+import { shipporiMincho, vazirmatnArabic, vazirmatnLatin } from '@/shared/ui/fonts';
 
 export function generateStaticParams(): Array<{ locale: string }> {
   return routing.locales.map((locale) => ({ locale }));
@@ -25,7 +25,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
     <html
       lang={locale}
       dir={directionOf(locale)}
-      className={`${vazirmatnLatin.variable} ${vazirmatnArabic.variable}`}
+      className={`${vazirmatnLatin.variable} ${vazirmatnArabic.variable} ${shipporiMincho.variable}`}
     >
       <body className="bg-washi font-sans text-ink antialiased">
         {/* Client components only need the locale for now; no message catalogue is shipped. */}

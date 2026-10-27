@@ -14,7 +14,6 @@ import localFont from 'next/font/local';
  * (`local("Arial")`) has no unicode-range and would sit between the two subsets
  * in the stack, so Persian text would render in Arial on systems that have it.
  * The fallback stack is declared once, after both subsets (globals.css).
- * Peyda (headlines) and Shippori Mincho (Latin display) arrive in Phase 1.
  */
 export const vazirmatnLatin = localFont({
   src: [
@@ -35,3 +34,25 @@ export const vazirmatnArabic = localFont({
   display: 'swap',
   adjustFontFallback: false,
 });
+
+/**
+ * Shippori Mincho (OFL-1.1, see `files/OFL-shippori-mincho.txt`), Latin display face
+ * (ADR 0012), Latin subset only. Not preloaded: on Persian pages its glyphs are unused.
+ * Weights beyond 400 arrive with the Phase 1 type scale.
+ */
+export const shipporiMincho = localFont({
+  src: './files/shippori-mincho-latin-400-normal.woff2',
+  weight: '400',
+  style: 'normal',
+  variable: '--font-shippori-mincho',
+  display: 'swap',
+  preload: false,
+  adjustFontFallback: false,
+});
+
+/**
+ * Peyda, the Persian headline face (ADR 0012), is licensed commercially, so its files
+ * must never be committed while the repository is public (risk register). Its slot is
+ * the `--font-heading-fa` variable in globals.css, which uses Vazirmatn until the
+ * licence and files arrive; adding Peyda means a `localFont` here and one line there.
+ */
