@@ -1,0 +1,6 @@
+# gitleaks false positives, one fingerprint per line, each with its reason (ADR 0016).
+# Never add a real secret here: rotate it and rewrite history instead.
+
+# A made-up 32-character S3 secret in a unit test of the production env rules
+# (src/shared/config/env.test.ts). The test now builds the value at runtime.
+4e1499313940e6583fabef842685ad75705a2247:src/shared/config/env.test.ts:generic-api-key:18
