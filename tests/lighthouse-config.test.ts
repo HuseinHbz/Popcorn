@@ -31,9 +31,13 @@ describe('lighthouserc.json', () => {
     }
   });
 
-  it('holds the DoD thresholds', () => {
+  it('holds the DoD thresholds for every category', () => {
     const min = Object.fromEntries(categories.map(([key, [, o]]) => [key, o.minScore]));
-    expect(min['categories:performance']).toBeGreaterThanOrEqual(0.95);
-    expect(min['categories:accessibility']).toBe(1);
+    expect(min).toEqual({
+      'categories:performance': 0.95,
+      'categories:accessibility': 1,
+      'categories:best-practices': 0.95,
+      'categories:seo': 0.95,
+    });
   });
 });
