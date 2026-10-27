@@ -5,6 +5,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Let new releases age before proposing them (pairs with pnpm minimumReleaseAge).
+    cooldown:
+      default-days: 3
     open-pull-requests-limit: 5
     groups:
       minor-and-patch:
@@ -17,6 +20,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Let new releases age before proposing them (pairs with pnpm minimumReleaseAge).
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: ci
 
@@ -24,6 +30,19 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Let new releases age before proposing them (pairs with pnpm minimumReleaseAge).
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: build
       include: scope
+
+  # Digest-pinned CI tool images (gitleaks, Semgrep).
+  - package-ecosystem: docker-compose
+    directory: /.github/ci-tools
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: ci
