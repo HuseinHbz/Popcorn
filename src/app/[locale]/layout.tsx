@@ -1,7 +1,6 @@
 import '../globals.css';
 
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
@@ -18,8 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LocaleLayout({ children, params }: LayoutProps<'/[locale]'>) {
-  const { locale } = await params;
-  if (!hasLocale(routing.locales, locale)) notFound();
+  // An unknown first segment (`/t/…`, `/api/…`) renders the shell in the default locale;
+  // the page below answers 404, so the 404 page is localized and accessible.
+  const { locale: requested } = await params;
+  const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
 
   return (
     <html
