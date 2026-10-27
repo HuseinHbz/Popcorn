@@ -55,12 +55,26 @@ services:
   objectstore:
     image: chrislusf/seaweedfs:4.51@sha256:f7a49e3f3972ebed5be2ed4befa4a0c68eb7bdddba6e692d42729ceb545134b8
     restart: unless-stopped
-    command: ['mini', '-dir=/data', '-bucket=${S3_BUCKET:-popcorn-media}']
+    # Only S3 is needed: no telemetry abroad (ADR 0008) and no extra unauthenticated
+    # services (WebDAV, Iceberg and Lance catalogs, admin UI) on the compose network.
+    command:
+      - mini
+      - -dir=/data
+      - -bucket=${S3_BUCKET:-popcorn-media}
+      - -master.telemetry=false
+      - -webdav=false
+      - -s3.port.iceberg=0
+      - -s3.port.lance=0
+      - -admin.ui=false
+      - -admin.port.legacy=0
     environment:
       AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY in .env}
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY in .env}
     ports:
       - '127.0.0.1:${S3_PORT:-8333}:8333'
+    # Its own network: weed mini's filer, master and IAM APIs are unauthenticated, so no
+    # other container may reach them. The app uses the published S3 port only.
+    networks: [objectstore]
     volumes:
       - objectstore-data:/data
     healthcheck:
@@ -68,6 +82,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+
+networks:
+  objectstore: {}
 
 volumes:
   postgres-data:
