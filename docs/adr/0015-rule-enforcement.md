@@ -86,6 +86,12 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
     config-file override with an ADR link.
   - Banning all arbitrary values means a genuinely new design value must first become a theme
     token. That is intended (CLAUDE.md), but it adds a step.
+  - False negatives: the syntax rules see the shapes they list, not data flow. A value that
+    reaches a style, attribute or JSX child through a variable, a function result or an import
+    (`const c = 'red'; style={{ color: c }}`) passes, and four review rounds kept finding new
+    shapes. Code review remains a control, each new shape found becomes a selector with a
+    fixture line, and a type-aware rule replaces the selectors if the list keeps growing (see
+    Revisit).
 - **Reversibility:** high. Each rule is a config entry, and removing one is a one-line diff
   whose fixture test then fails visibly.
 - **Iran fit:** everything runs offline from the lockfile, with no network service involved.
@@ -94,5 +100,6 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
 
 - `eslint-plugin-boundaries` cannot express a boundary we need (for example module-to-module
   events in Phase 6), or
-- false positives from the syntax rules need more than three config overrides, the sign that a
-  regex should become a proper rule.
+- false positives from the syntax rules need more than three config overrides, or a review finds
+  another shape the selectors miss after Phase 1: either is the sign that a regex should become a
+  proper (type-aware) rule.
