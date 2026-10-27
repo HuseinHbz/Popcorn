@@ -86,6 +86,20 @@ jobs:
       - name: Semgrep (TypeScript, React, Next.js, secrets rule packs)
         run: docker compose -f .github/ci-tools/compose.yaml run --rm semgrep
 
+  freshness:
+    name: Supply-chain freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: No accepted risk is past its review date
+        run: node scripts/check-risk-register.ts
+
   build:
     name: Build · E2E (axe) · Lighthouse
     runs-on: ubuntu-latest
