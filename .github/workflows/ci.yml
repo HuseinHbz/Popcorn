@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   quality:
-    name: Lint · format · typecheck · unit tests · audit
+    name: Commit messages · dependency audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -52,16 +52,6 @@ jobs:
         run: pnpm audit --audit-level=high
       - name: Production dependency audit (no accepted risks apply)
         run: pnpm audit --prod --json | jq -e '.metadata.vulnerabilities | (.high + .critical) == 0'
-      - run: pnpm lint
-      - run: pnpm format:check
-      - run: pnpm typecheck
-      - run: pnpm test:coverage
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: always()
-        with:
-          name: coverage
-          path: coverage/
-          retention-days: 14
 
   secrets:
     name: Secret scan (gitleaks)
@@ -103,7 +93,7 @@ jobs:
         run: node scripts/check-node-version.ts
 
   build:
-    name: Build · E2E (axe) · Lighthouse
+    name: Verify (lint · format · typecheck · tests · build) · E2E (axe) · Lighthouse
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -116,7 +106,13 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+      - run: pnpm verify
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm e2e
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
