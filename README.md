@@ -6,7 +6,7 @@ Website and admin platform for Popcorn Group's restaurants: public bilingual sit
 
 ## Status
 
-Phase 0 — foundation: toolchain, local services, CI and a bilingual RTL hello page. See [`docs/stories/platform-foundation.md`](docs/stories/platform-foundation.md).
+Phase 0 — foundation: toolchain, local services, CI and a bilingual RTL hello page (in review). Work runs phase by phase: `claude`, then `/phase NN` ([`docs/phases/`](docs/phases/)); see [`docs/phases/phase-00.md`](docs/phases/phase-00.md) and [`docs/stories/platform-foundation.md`](docs/stories/platform-foundation.md).
 
 ## Local setup
 
@@ -49,6 +49,7 @@ CI (`.github/workflows/ci.yml`) runs all of the above on every push, plus Conven
 | Claude Code subagents (team roles)                                                            | [`.claude/agents/`](.claude/agents/)                         |
 | Scorecard template (≥ 98/100 gate)                                                            | [`docs/scorecards/TEMPLATE.md`](docs/scorecards/TEMPLATE.md) |
 | User stories                                                                                  | [`docs/stories/`](docs/stories/)                             |
+| Execution phases for Claude Code (`/phase NN`, `/review`)                                     | [`docs/phases/`](docs/phases/)                               |
 
 ## Releases
 

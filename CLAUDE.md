@@ -14,7 +14,7 @@ Next.js App Router · TypeScript strict · Tailwind · Drizzle · PostgreSQL · 
 - Orders are mostly entered by waiters. QR mode per branch/table: `menu_only` | `order`; both have "call waiter".
 - No hard-coded tax/service/fees. `charge_rules` scoped to branch → category → item_group → item (most specific wins); manual `order_charges` need `orders:add_charge` + audit log. Kish is a free zone — never assume Tehran rates.
 - Booking requires a registered customer with personal info; deposit is toggleable per branch; SMS confirmation always.
-- Payment PSP: Saman Kish (SEP) behind `PaymentGateway` adapter.
+- Payment PSP: Saman Kish (SEP) behind `PaymentGateway` adapter; built in phase 04 (booking deposits), reused in phase 06.
 - Sync: Sepidz (web ordering) and Rahkaran (finance) via separate adapters + outbox. Source of truth TBD — do not build sync before ADR 0011 is accepted.
 - Existing logos/brand identities are kept. Headline font: Peyda (licensed); body: Vazirmatn; Latin display: Shippori Mincho. All self-hosted.
 
@@ -46,6 +46,8 @@ src/shared/{ui,lib,auth,i18n,config}
 Dependency rule: `app` → `modules/*/server` → `modules/*/domain`.
 
 ## Workflow
+
+Start work with `/phase NN`; review with `/review` in a fresh session. Phases: `docs/phases/`.
 
 1. Read the story in `docs/stories/` and related ADRs.
 2. Plan mode first for any change touching more than 2 files (use the `architect` agent).
