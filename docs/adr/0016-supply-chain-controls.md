@@ -58,6 +58,10 @@ Constraints:
 - **Scanning:**
   - Semgrep (TypeScript, React, Next.js and secrets packs) and gitleaks (full history) run on
     every push, with the repository mounted read-only.
+  - The scanned code cannot switch them off: gitleaks runs with a pinned configuration
+    (`.github/ci-tools/gitleaks.toml`, the built-in rules only), and CI fails on a
+    `.gitleaks.toml` or `.semgrepignore` in the repository or an inline suppression comment
+    in any commit. The only exceptions are `.gitleaksignore` fingerprints, each with a reason.
   - Dependabot covers npm, GitHub Actions and both compose files, after a 3-day cooldown.
 
 ## Consequences

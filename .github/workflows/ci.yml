@@ -72,6 +72,16 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: No scanner can be switched off from inside the repository
+        run: |
+          # Exceptions live only in .gitleaksignore: fingerprints, each with a reason (ADR 0016).
+          for file in .gitleaks.toml .semgrepignore; do
+            if [ -e "$file" ]; then echo "::error::$file must not exist"; exit 1; fi
+          done
+          # No inline suppression in any commit; scorecards quote the markers, so they are skipped.
+          marker='gitleaks:al''low|nosem''grep'
+          found=$(git log --all -E -G"$marker" --format='%h %s' -- . ':!docs/scorecards')
+          if [ -n "$found" ]; then echo "::error::inline scanner suppression in: $found"; exit 1; fi
       - name: Scan full history
         run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
 
