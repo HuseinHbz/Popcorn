@@ -33,11 +33,17 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Commit messages (Conventional Commits)
+        env:
+          BEFORE: ${{ github.event.before }}
         run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            pnpm exec commitlint --last --verbose
-          else
+          # Every commit the push adds: the branch's commits since main, or on main the
+          # pushed range (a brand-new ref has an all-zero "before").
+          if [ "${GITHUB_REF_NAME}" != "main" ]; then
             pnpm exec commitlint --from origin/main --to HEAD --verbose
+          elif [ -n "${BEFORE}" ] && [ "${BEFORE}" != "0000000000000000000000000000000000000000" ]; then
+            pnpm exec commitlint --from "${BEFORE}" --to HEAD --verbose
+          else
+            pnpm exec commitlint --last --verbose
           fi
       - name: Dependency audit (accepted risks in docs/security/risk-register.md)
         run: pnpm audit --audit-level=high
@@ -64,6 +70,22 @@ jobs:
       - name: Scan full history
         run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f git /repo --redact --verbose
 
+  sast:
+    name: Static analysis (Semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Semgrep (TypeScript, React, Next.js, secrets rule packs)
+        run: >
+          docker run --rm -v "$PWD:/src" -w /src
+          semgrep/semgrep:1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6
+          semgrep scan --metrics=off --error
+          --config p/typescript --config p/react --config p/nextjs --config p/secrets
+          --exclude tests/fixtures
+
   build:
     name: Build · E2E (axe) · Lighthouse
     runs-on: ubuntu-latest
@@ -89,6 +111,9 @@ jobs:
           retention-days: 14
       - name: Lighthouse CI (mobile)
         run: pnpm lhci
+      - name: Lighthouse scores to job summary
+        if: always()
+        run: node scripts/lighthouse-summary.ts >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -106,6 +131,8 @@ jobs:
           persist-credentials: false
       - run: cp .env.example .env
       - run: docker compose config --quiet
+      - name: Every published port binds to 127.0.0.1
+        run: docker compose config --format json | jq -e '[.services[].ports[]? | .host_ip] | length > 0 and all(. == "127.0.0.1")'
       - run: docker compose up --detach --wait --wait-timeout 120
       - name: Postgres has btree_gist
         run: docker compose exec -T postgres psql -U popcorn -d popcorn -tAc "select 1 from pg_extension where extname = 'btree_gist'" | grep -qx 1
