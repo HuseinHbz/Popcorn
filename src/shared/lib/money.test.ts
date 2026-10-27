@@ -26,6 +26,12 @@ describe('formatToman', () => {
     expect(formatToman(1_250_000n, 'en')).toBe('125,000');
   });
 
+  it('formats amounts beyond Number.MAX_SAFE_INTEGER exactly, in both locales', () => {
+    // 2^53 + 1 Toman: a float would print …992.
+    expect(formatToman(90_071_992_547_409_930n, 'en')).toBe('9,007,199,254,740,993');
+    expect(formatToman(90_071_992_547_409_930n)).toBe('۹٬۰۰۷٬۱۹۹٬۲۵۴٬۷۴۰٬۹۹۳');
+  });
+
   it('formats negative amounts (refunds)', () => {
     expect(formatToman(-1_250_000n, 'en')).toBe('-125,000');
     expect(formatToman(-1_250_000n)).toContain('۱۲۵٬۰۰۰');
