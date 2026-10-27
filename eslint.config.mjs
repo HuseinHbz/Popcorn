@@ -7,6 +7,9 @@ import nextTypescript from 'eslint-config-next/typescript';
 import prettier from 'eslint-config-prettier/flat';
 import tseslint from 'typescript-eslint';
 
+/** A value chosen by `?:`, `||`, `&&` or `??`: each branch is checked like a plain value. */
+const BRANCH = ':matches(ConditionalExpression, LogicalExpression)';
+
 // CLAUDE.md: only design tokens for colour, spacing, radius and font. Bans raw colours
 // (hex, colour functions) anywhere; Tailwind arbitrary values and properties (`w-[13px]`,
 // `[color:red]`); literal values for colour properties in any object; the 148 named colours
@@ -28,6 +31,12 @@ const SIZE_KEY =
 const SVG_COLOR_ATTRIBUTE = '/^(?:fill|stroke|color|stopColor|floodColor|lightingColor)$/';
 const keyMatches = (pattern) => `:matches([key.name=${pattern}], [key.value=${pattern}])`;
 const VALUE = ':matches(Literal, TemplateLiteral)';
+const NAMED_VALUE = `:matches(Literal[value=${NAMED_COLOR}], TemplateLiteral:has(TemplateElement[value.raw=${NAMED_COLOR}]))`;
+const SIZE_VALUE =
+  ":matches(Literal, UnaryExpression[argument.type='Literal'], TemplateLiteral[expressions.length=0])";
+const COLOR_PROPERTY = `Property${keyMatches(COLOR_KEY)}`;
+const BEARING_PROPERTY = `Property${keyMatches(COLOR_BEARING_KEY)}:not(${keyMatches(COLOR_KEY)})`;
+const SIZE_PROPERTY = `JSXAttribute[name.name='style'] Property${keyMatches(SIZE_KEY)}`;
 const TOKEN_SYNTAX = [
   [`Literal[value=${RAW_COLOR}]`, 'Use a design token, not a raw colour.'],
   [`TemplateElement[value.raw=${RAW_COLOR}]`, 'Use a design token, not a raw colour.'],
@@ -36,12 +45,14 @@ const TOKEN_SYNTAX = [
     `TemplateElement[value.raw=${ARBITRARY_VALUE}]`,
     'Use a theme token, not a Tailwind arbitrary value.',
   ],
+  [`${COLOR_PROPERTY} > .value${VALUE}`, 'Use a design-token class, not an inline colour value.'],
   [
-    `Property${keyMatches(COLOR_KEY)} > .value${VALUE}`,
+    `${COLOR_PROPERTY} > .value${BRANCH} > ${VALUE}`,
     'Use a design-token class, not an inline colour value.',
   ],
+  [`${BEARING_PROPERTY} > .value${NAMED_VALUE}`, 'Use a design token, not a named colour.'],
   [
-    `Property${keyMatches(COLOR_BEARING_KEY)}:not(${keyMatches(COLOR_KEY)}) > .value:matches(Literal[value=${NAMED_COLOR}], TemplateLiteral:has(TemplateElement[value.raw=${NAMED_COLOR}]))`,
+    `${BEARING_PROPERTY} > .value${BRANCH} > ${NAMED_VALUE}`,
     'Use a design token, not a named colour.',
   ],
   [
@@ -49,7 +60,15 @@ const TOKEN_SYNTAX = [
     'Use a design token, not a named colour.',
   ],
   [
-    `JSXAttribute[name.name='style'] Property${keyMatches(SIZE_KEY)} > .value:matches(Literal, TemplateLiteral[expressions.length=0])`,
+    `JSXAttribute[name.name=${SVG_COLOR_ATTRIBUTE}] TemplateElement[value.raw=${NAMED_COLOR}]`,
+    'Use a design token, not a named colour.',
+  ],
+  [
+    `${SIZE_PROPERTY} > .value${SIZE_VALUE}`,
+    'Use a spacing, radius or font token class, not an inline value.',
+  ],
+  [
+    `${SIZE_PROPERTY} > .value${BRANCH} > ${SIZE_VALUE}`,
     'Use a spacing, radius or font token class, not an inline value.',
   ],
 ].map(([selector, message]) => ({ selector, message }));
@@ -62,7 +81,6 @@ const TOKEN_SYNTAX = [
 const TEXT_ATTRIBUTE =
   '/^(?:alt|title|placeholder|label|aria-label|aria-description|aria-placeholder|aria-roledescription|aria-valuetext)$/';
 const TEXT = ':matches(Literal[value=/\\S/], TemplateLiteral)';
-const BRANCH = ':matches(ConditionalExpression, LogicalExpression)';
 const BUTTON_INPUT =
   "JSXOpeningElement[name.name='input']:has(JSXAttribute[name.name='type'] > Literal[value=/^(?:submit|reset|button)$/])";
 const I18N_MESSAGE = 'User-facing text comes from next-intl, not a literal.';
