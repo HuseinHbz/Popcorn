@@ -94,6 +94,15 @@ const PURE_SYNTAX = [
   'CallExpression[callee.property.name=/^format(?:ToParts)?$/][arguments.length=0]',
 ].map((selector) => ({ selector, message: PURE_MESSAGE }));
 
+// Raw HTML outside the forms react/no-danger sees: createElement props, spread objects
+// and <iframe srcDoc> (security review round 4, G4). In both no-restricted-syntax lists,
+// because a later list replaces an earlier one.
+const UNSAFE_SYNTAX = [
+  "Property[key.name='dangerouslySetInnerHTML']",
+  "Property[key.value='dangerouslySetInnerHTML']",
+  "JSXAttribute[name.name='srcDoc']",
+].map((selector) => ({ selector, message: 'No raw HTML: render React elements instead.' }));
+
 const SAME_MODULE = { module: '{{ from.element.captured.module }}' };
 
 /**
@@ -246,7 +255,7 @@ export default defineConfig([
           policies: boundaryPolicies,
         },
       ],
-      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...I18N_SYNTAX],
+      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...I18N_SYNTAX, ...UNSAFE_SYNTAX],
       'react/jsx-no-literals': ['error', { noStrings: true, ignoreProps: true }],
     },
   },
@@ -260,7 +269,13 @@ export default defineConfig([
     ],
     ignores: ['**/*.test.ts'],
     rules: {
-      'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...I18N_SYNTAX, ...PURE_SYNTAX],
+      'no-restricted-syntax': [
+        'error',
+        ...TOKEN_SYNTAX,
+        ...I18N_SYNTAX,
+        ...UNSAFE_SYNTAX,
+        ...PURE_SYNTAX,
+      ],
       'no-restricted-globals': [
         'error',
         ...IMPURE_GLOBALS.map((name) => ({

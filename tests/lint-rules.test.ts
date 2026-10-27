@@ -170,6 +170,12 @@ describe('code rules', () => {
     );
   });
 
+  it('rejects raw HTML through createElement, a spread object or <iframe srcDoc>', () => {
+    // The three lines are marked in the fixture; react/no-danger misses all of them.
+    const rules = rulesIn('shared/ui/unsafe-code.tsx');
+    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(3);
+  });
+
   it('rejects @ts-ignore', () => {
     expect(rulesIn('shared/ui/ts-ignore.ts')).toContain('@typescript-eslint/ban-ts-comment');
   });
