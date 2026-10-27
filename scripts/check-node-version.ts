@@ -2,7 +2,7 @@
  * Fails when Node.js has published a security release in the pinned major line
  * that is newer than `.nvmrc` (Dependabot does not track `.nvmrc`), or when that line
  * has reached end of life and gets no more security releases at all. Warns 90 days ahead.
- * Usage: node scripts/check-node-version.ts
+ * Usage: node scripts/check-node-version.ts [version]
  */
 import { readFileSync } from 'node:fs';
 
@@ -77,8 +77,9 @@ async function fetchJson(url: string): Promise<unknown> {
   return response.json();
 }
 
+/** Checks the version in `.nvmrc`, or the version given as an argument. */
 async function main(): Promise<void> {
-  const pinned = readFileSync('.nvmrc', 'utf8').trim();
+  const pinned = process.argv[2] ?? readFileSync('.nvmrc', 'utf8').trim();
   const releases = parseReleases(await fetchJson('https://nodejs.org/dist/index.json'));
   const missing = missingSecurityReleases(pinned, releases);
   const schedule = 'https://raw.githubusercontent.com/nodejs/Release/main/schedule.json';

@@ -55,6 +55,8 @@ Option C:
     against the npm registry's advisory API (`scripts/check-package-manager.ts`). Moderate counts
     here, unlike the dependency audit, because pnpm's Moderate advisories include
     lockfile-integrity bypasses. The pnpm 10.28.0 pin fails this check (verified).
+  - Both checks reject an answer of unexpected shape, and CI runs them against known-bad pins
+    (Node 22.22.1, pnpm 10.28.0) as positive controls that must fail for the right reason.
   - `engine-strict` stays off: it applies to every transitive dependency and would block installs
     over a patch version.
 - **Next.js 16 conventions:** locale routing lives in `src/proxy.ts`, the locale is read through

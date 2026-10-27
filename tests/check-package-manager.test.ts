@@ -52,6 +52,10 @@ describe('parseAdvisories', () => {
     ['a list', []],
     ['a non-list entry', { pnpm: 'error' }],
     ['an advisory without severity', { pnpm: [{ title: 'x' }] }],
+    ['an upper-case severity', { pnpm: [{ severity: 'HIGH' }] }],
+    ['an unknown severity', { pnpm: [{ severity: 'severe' }] }],
+    ['a wrapped answer', { data: { pnpm: [{ severity: 'high' }] } }],
+    ['a re-keyed answer', { 'pnpm@10.28.0': [{ severity: 'high' }] }],
     ['a null advisory', { pnpm: [null] }],
   ])('fails on %s', (_, data) => {
     expect(() => parseAdvisories(data, 'pnpm')).toThrow('npm advisory API');
