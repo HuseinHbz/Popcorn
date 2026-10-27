@@ -47,6 +47,8 @@ jobs:
           fi
       - name: Dependency audit (accepted risks in docs/security/risk-register.md)
         run: pnpm audit --audit-level=high
+      - name: Production dependency audit (no accepted risks apply)
+        run: pnpm audit --prod --json | jq -e '.metadata.vulnerabilities | (.high + .critical) == 0'
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm typecheck
