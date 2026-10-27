@@ -68,8 +68,9 @@ Constraints:
     is used.
   - The cooldown means Dependabot proposes a fix 3 days after release. `pnpm audit` still flags
     the vulnerable version immediately, so the gap is in the fix proposal, not in detection.
-  - Regex-free tools (gitleaks, Semgrep) can still produce false positives, which are handled
-    with a tool-specific allowlist and a written reason.
+  - gitleaks matches secrets by regex and entropy, and Semgrep by pattern rules, so both can
+    produce false positives. They are handled with the tool's own allowlist and a written
+    reason, never by disabling the scan.
 - **Reversibility:** high. Every control is one config entry or one CI step.
 - **Iran fit:**
   - Hash and digest pins make a compromised mirror detectable, because the bytes must match.
