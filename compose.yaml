@@ -28,14 +28,16 @@ services:
   redis:
     image: redis:7.4.12-alpine@sha256:338fbfc036dc5517ac0b04d6de21521085935336e565f223406180e9d84166e2
     restart: unless-stopped
+    # The password reaches redis-server through a config file written at start-up,
+    # so it never appears in the process arguments (`ps`, `docker inspect` Cmd).
+    # The image entrypoint still runs last, so redis-server drops to the redis user.
     command:
-      [
-        'redis-server',
-        '--appendonly',
-        'yes',
-        '--requirepass',
-        '${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}',
-      ]
+      - sh
+      - -c
+      - >-
+        umask 077 && printf 'requirepass %s\nappendonly yes\n' "$$REDISCLI_AUTH" > /tmp/redis.conf
+        && chown redis:redis /tmp/redis.conf
+        && exec docker-entrypoint.sh redis-server /tmp/redis.conf
     ports:
       - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     volumes:
@@ -46,8 +48,8 @@ services:
       timeout: 3s
       retries: 10
     environment:
-      # redis-cli reads the password from here, keeping it off the healthcheck command line.
-      REDISCLI_AUTH: ${REDIS_PASSWORD}
+      # Read by the start-up command above and by redis-cli (healthcheck) — never argv.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
 
   # S3-compatible object storage for menu images and résumés (ADR 0013).
   objectstore:
