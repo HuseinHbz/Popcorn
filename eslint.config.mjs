@@ -31,22 +31,26 @@ const TOKEN_SYNTAX = [
   },
 ];
 
-// CLAUDE.md: every user-facing string goes through next-intl. JSX text is covered by
-// react/jsx-no-literals; these catch literal text in user-facing attributes.
+// CLAUDE.md: every user-facing string goes through next-intl. JSX text, wrapped or not,
+// is covered by react/jsx-no-literals (noStrings); these catch literal text in user-facing
+// attributes, directly or as a branch of `?:`, `||`, `&&` or `??` (two levels deep), and
+// the visible `value` of submit, reset and button inputs. A literal passed to a function
+// (a message key) is not text and is allowed.
 const TEXT_ATTRIBUTE =
   '/^(?:alt|title|placeholder|label|aria-label|aria-description|aria-placeholder|aria-roledescription|aria-valuetext)$/';
+const TEXT = ':matches(Literal[value=/\\S/], TemplateLiteral)';
+const BRANCH = ':matches(ConditionalExpression, LogicalExpression)';
+const BUTTON_INPUT =
+  "JSXOpeningElement[name.name='input']:has(JSXAttribute[name.name='type'] > Literal[value=/^(?:submit|reset|button)$/])";
 const I18N_MESSAGE = 'User-facing text comes from next-intl, not a literal.';
 const I18N_SYNTAX = [
-  { selector: `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > Literal`, message: I18N_MESSAGE },
-  {
-    selector: `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > Literal`,
-    message: I18N_MESSAGE,
-  },
-  {
-    selector: `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > TemplateLiteral`,
-    message: I18N_MESSAGE,
-  },
-];
+  `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > ${TEXT}`,
+  `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > ${TEXT}`,
+  `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > ${BRANCH} > ${TEXT}`,
+  `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > ${BRANCH} > ${BRANCH} > ${TEXT}`,
+  `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > ${TEXT}`,
+  `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > JSXExpressionContainer > ${TEXT}`,
+].map((selector) => ({ selector, message: I18N_MESSAGE }));
 
 // Pure code reads no ambient state: the clock and randomness are passed in.
 const PURE_MESSAGE = '`domain/` and `shared/lib` must stay pure: pass the clock or randomness in.';
@@ -202,7 +206,7 @@ export default defineConfig([
         },
       ],
       'no-restricted-syntax': ['error', ...TOKEN_SYNTAX, ...I18N_SYNTAX],
-      'react/jsx-no-literals': ['error', { ignoreProps: true }],
+      'react/jsx-no-literals': ['error', { noStrings: true, ignoreProps: true }],
     },
   },
   {
