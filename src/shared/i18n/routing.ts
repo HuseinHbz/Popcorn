@@ -1,9 +1,11 @@
 import { defineRouting } from 'next-intl/routing';
 
+import { DEFAULT_LOCALE, LOCALES } from '@/shared/lib/locale';
+
 /** Persian is the default locale; English is second (project plan §5). */
 export const routing = defineRouting({
-  locales: ['fa', 'en'],
-  defaultLocale: 'fa',
+  locales: LOCALES,
+  defaultLocale: DEFAULT_LOCALE,
   localePrefix: 'always',
   // `/` always lands on Persian; visitors switch language explicitly.
   localeDetection: false,
