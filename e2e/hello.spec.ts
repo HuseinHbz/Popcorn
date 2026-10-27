@@ -56,9 +56,15 @@ for (const { locale, dir, title, switchTo, other, otherDir } of PAGES) {
       // and both load: every page mixes Persian and Latin text (the language link).
       expect(fonts.body).toMatch(/^"?vazirmatnLatin"?, "?vazirmatnArabic"?,/);
       expect(fonts.loaded).toEqual(expect.arrayContaining(['vazirmatnLatin', 'vazirmatnArabic']));
-      // Headings: Shippori Mincho for Latin glyphs, then the Persian headline slot.
-      expect(fonts.heading).toMatch(/^"?shipporiMincho"?, "?vazirmatnArabic"?, serif$/);
-      if (locale === 'en') expect(fonts.loaded).toContain('shipporiMincho');
+      // Headings: Shippori Mincho for Latin glyphs and the Persian headline slot for Persian.
+      // Persian pages lead with the slot, so Shippori is never downloaded there (ADR 0017).
+      if (locale === 'en') {
+        expect(fonts.heading).toMatch(/^"?shipporiMincho"?, "?vazirmatnArabic"?, serif$/);
+        expect(fonts.loaded).toContain('shipporiMincho');
+      } else {
+        expect(fonts.heading).toMatch(/^"?vazirmatnArabic"?, "?shipporiMincho"?, serif$/);
+        expect(fonts.loaded).not.toContain('shipporiMincho');
+      }
     });
 
     test('has no axe violations', async ({ page }) => {
