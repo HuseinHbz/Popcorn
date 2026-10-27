@@ -1,11 +1,18 @@
 /**
  * Fails when Node.js has published a security release in the pinned major line
- * that is newer than `.nvmrc` (Dependabot does not track `.nvmrc`).
+ * that is newer than `.nvmrc` (Dependabot does not track `.nvmrc`), or when that line
+ * has reached end of life and gets no more security releases at all. Warns 90 days ahead.
  * Usage: node scripts/check-node-version.ts
  */
 import { readFileSync } from 'node:fs';
 
 export type NodeRelease = { version: string; security: boolean };
+
+/** Shape of nodejs/Release `schedule.json`, read defensively: every field is checked. */
+type Schedule = Record<string, { end?: unknown } | null | undefined>;
+
+const EOL_WARNING_DAYS = 90;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function parse(version: string): [number, number, number] {
   const [major = 0, minor = 0, patch = 0] = version.replace(/^v/, '').split('.').map(Number);
@@ -46,13 +53,45 @@ export function missingSecurityReleases(pinned: string, releases: NodeRelease[])
     .map((version) => version.join('.'));
 }
 
+/** Reads the end-of-life date of the major line of `pinned` from the Release schedule. */
+export function endOfLife(pinned: string, schedule: unknown): string {
+  const line = `v${String(parse(pinned)[0])}`;
+  const lines = (typeof schedule === 'object' && schedule !== null ? schedule : {}) as Schedule;
+  const end = lines[line]?.end;
+  if (typeof end !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+    throw new Error(`Node release schedule: no end-of-life date for ${line}`);
+  }
+  return end;
+}
+
+/** `ended` after the end-of-life date, `ending` within the warning window before it. */
+export function supportStatus(end: string, today: Date): 'supported' | 'ending' | 'ended' {
+  const daysLeft = (Date.parse(`${end}T00:00:00Z`) - today.getTime()) / DAY_MS;
+  if (daysLeft < 0) return 'ended';
+  return daysLeft <= EOL_WARNING_DAYS ? 'ending' : 'supported';
+}
+
+async function fetchJson(url: string): Promise<unknown> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url} returned ${String(response.status)}`);
+  return response.json();
+}
+
 async function main(): Promise<void> {
   const pinned = readFileSync('.nvmrc', 'utf8').trim();
-  const response = await fetch('https://nodejs.org/dist/index.json');
-  if (!response.ok) throw new Error(`nodejs.org returned ${String(response.status)}`);
-  const missing = missingSecurityReleases(pinned, parseReleases(await response.json()));
-  if (missing.length === 0) return;
-  console.error(`.nvmrc pins Node ${pinned}; newer security releases: ${missing.join(', ')}`);
+  const releases = parseReleases(await fetchJson('https://nodejs.org/dist/index.json'));
+  const missing = missingSecurityReleases(pinned, releases);
+  const schedule = 'https://raw.githubusercontent.com/nodejs/Release/main/schedule.json';
+  const end = endOfLife(pinned, await fetchJson(schedule));
+  const status = supportStatus(end, new Date());
+  if (status === 'ending') {
+    console.log(`::warning::Node ${pinned} reaches end of life on ${end}; plan the upgrade.`);
+  }
+  if (missing.length === 0 && status !== 'ended') return;
+  if (missing.length > 0) {
+    console.error(`.nvmrc pins Node ${pinned}; newer security releases: ${missing.join(', ')}`);
+  }
+  if (status === 'ended') console.error(`Node ${pinned} reached end of life on ${end}.`);
   process.exit(1);
 }
 

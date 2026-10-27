@@ -46,8 +46,10 @@ Option C:
 - **Runtime:** Node 22.23.4 (`.nvmrc` exact, `engines >=22.23.4`) and pnpm 10.34.9
   (`packageManager`, installed via Corepack). Both are the latest security releases of their
   lines.
-  - The weekly CI `freshness` job fails when nodejs.org lists a newer Node security release in the
-    pinned major line (`scripts/check-node-version.ts`).
+  - The CI `freshness` job (every push, and weekly) fails when nodejs.org lists a newer Node
+    security release in the pinned major line, or when that line has reached end of life
+    (`scripts/check-node-version.ts`, reading nodejs/Release `schedule.json`). It warns 90 days
+    before the end of life; Node 22 ends on 2027-04-30.
   - It also fails when the pinned pnpm has a High or Critical advisory, checked against the npm
     registry's advisory API (`scripts/check-package-manager.ts`). The pnpm 10.28.0 pin would
     have failed this check.
@@ -77,4 +79,6 @@ Option C:
 
 - `typescript-eslint` supports TypeScript 7 **and** `eslint-config-next` supports ESLint 10, or
 - an ESLint 9 advisory of High severity has no backport within 30 days, or
-- CI moves to self-hosted runners: mirror Node, pnpm and the Playwright browsers first.
+- CI moves to self-hosted runners: mirror Node, pnpm and the Playwright browsers first, or
+- the `freshness` job warns that Node 22 is within 90 days of end of life (from 2027-01-30):
+  move to the next LTS line.
