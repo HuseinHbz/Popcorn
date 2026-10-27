@@ -154,6 +154,17 @@ describe('code rules', () => {
     );
   });
 
+  it('rejects eval, new Function, dangerouslySetInnerHTML and javascript: URLs', () => {
+    expect(rulesIn('shared/ui/unsafe-code.tsx')).toEqual(
+      expect.arrayContaining([
+        'no-eval',
+        'no-new-func',
+        'react/no-danger',
+        'react/jsx-no-script-url',
+      ]),
+    );
+  });
+
   it('rejects @ts-ignore', () => {
     expect(rulesIn('shared/ui/ts-ignore.ts')).toContain('@typescript-eslint/ban-ts-comment');
   });
