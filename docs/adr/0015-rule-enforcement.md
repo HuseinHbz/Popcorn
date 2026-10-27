@@ -50,8 +50,10 @@ asserts it fires.
   - `app` never imports `domain`.
   - `domain/` and `shared/lib` import no package and no Node built-in.
 - **Pure code:** in `domain/` and `shared/lib`, I/O and ambient globals (`fetch`, `process`,
-  `globalThis`, `console`, `crypto`, timers, …), `Date.now()`, `new Date()` and `Math.random()`
-  are banned. The clock and randomness are passed in.
+  `globalThis`, `console`, `crypto`, storage, timers and schedulers, …) are banned, and so is
+  reading the clock or randomness in any shape: `Date.now` and `Math.random` (called or
+  referenced), `Date()`, `new Date()`, computed access (`Date['now']`), aliases (`const D =
+Date`) and argument-less Intl `format()`. The clock and randomness are passed in.
 - **Tokens:**
   - In TS/TSX, hex and colour-function literals, every Tailwind arbitrary value
     (`text-[red]`, `w-[13px]`) and inline colour values in style objects are banned.
