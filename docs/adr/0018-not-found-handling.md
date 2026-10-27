@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: pending independent review (rubric: docs/project-plan.md §3)
+- Score: 97/100 (code review round 4, at `26e1971`, `docs/scorecards/phase-0/foundation-round-4.md`). Amended after round 4; re-score pending.
 - Related: ADR 0014 (Next.js 16 conventions), story platform-foundation AC19
 
 ## Context

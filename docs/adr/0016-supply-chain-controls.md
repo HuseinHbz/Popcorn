@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: 99/100 (code review round 3, at `a457aee`, `docs/scorecards/phase-0/foundation-round-3.md`). Amended after round 3; re-score pending.
+- Score: 99/100 (code review round 4, at `26e1971`, `docs/scorecards/phase-0/foundation-round-4.md`). Amended after round 4; re-score pending.
 - Related: ADR 0008 (self-host in Iran), ADR 0014 (toolchain), `docs/security/risk-register.md`
 
 ## Context
