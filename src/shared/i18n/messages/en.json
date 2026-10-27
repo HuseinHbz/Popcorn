@@ -14,5 +14,10 @@
       "izakaya": "Izakaya"
     },
     "switchLocale": "فارسی"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "lead": "The address you are looking for does not exist or has moved.",
+    "home": "Back to the home page"
   }
 }

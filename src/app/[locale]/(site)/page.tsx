@@ -1,11 +1,16 @@
-import { getLocale, getTranslations } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import { hasLocale } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 
 import { Link } from '@/shared/i18n/navigation';
+import { routing } from '@/shared/i18n/routing';
 
 const BRANDS = ['nakaya', 'emCafe', 'izakaya'] as const;
 
-export default async function HomePage() {
-  const [locale, t] = await Promise.all([getLocale(), getTranslations('Home')]);
+export default async function HomePage({ params }: PageProps<'/[locale]'>) {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) notFound();
+  const t = await getTranslations('Home');
   const otherLocale = locale === 'fa' ? 'en' : 'fa';
 
   return (
