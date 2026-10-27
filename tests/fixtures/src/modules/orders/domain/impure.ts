@@ -1,3 +1,3 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs'; // expect: boundaries/dependencies
 
-export const load = (): Promise<Response> => fetch(String(readFileSync('x')));
+export const load = (): Promise<Response> => fetch(String(readFileSync('x'))); // expect: no-restricted-globals

@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { ESLint } from 'eslint';
@@ -6,12 +7,14 @@ import { beforeAll, describe, expect, it } from 'vitest';
 /**
  * Proves the CLAUDE.md non-negotiables enforced by eslint.config.mjs actually fire
  * (story platform-foundation AC8). Fixtures in tests/fixtures/src mirror the real
- * `src/` layout and are excluded from the normal lint run.
+ * `src/` layout and are excluded from the normal lint run. Each fixture line marks the
+ * findings it must produce with an `expect: rule-a, rule-b` comment; every other line
+ * must produce none, so a rule that stops firing or starts misfiring fails here.
  */
 const root = fileURLToPath(new URL('..', import.meta.url));
 const fixture = (path: string): string => `tests/fixtures/src/${path}`;
 
-type Finding = { ruleId: string | null; severity: number };
+type Finding = { ruleId: string | null; severity: number; line: number };
 const findings = new Map<string, Finding[]>();
 
 beforeAll(async () => {
@@ -21,13 +24,41 @@ beforeAll(async () => {
     const key = result.filePath.slice(result.filePath.indexOf('tests/fixtures/src/') + 19);
     findings.set(
       key,
-      result.messages.map(({ ruleId, severity }) => ({ ruleId, severity })),
+      result.messages.map(({ ruleId, severity, line }) => ({ ruleId, severity, line })),
     );
   }
 }, 120_000);
 
 const rulesIn = (path: string): Array<string | null> =>
   (findings.get(path) ?? []).map((finding) => finding.ruleId);
+
+/** Fixture paths relative to tests/fixtures/src. */
+const fixtures = readdirSync(`${root}tests/fixtures/src`, { recursive: true, encoding: 'utf8' })
+  .filter((path) => /\.tsx?$/.test(path))
+  .sort();
+
+/** `line:rule` for every `expect:` marker; `inline-config` stands for an ignored directive. */
+function expectedIn(path: string): string[] {
+  const lines = readFileSync(`${root}${fixture(path)}`, 'utf8').split('\n');
+  return lines
+    .flatMap((text, index) => {
+      const rules = /expect: ([^)*]+?)\s*(?:\)|\*\/\}?)?\s*$/.exec(text)?.[1] ?? '';
+      return rules ? rules.split(',').map((rule) => `${String(index + 1)}:${rule.trim()}`) : [];
+    })
+    .sort();
+}
+
+const actualIn = (path: string): string[] =>
+  (findings.get(path) ?? [])
+    .map(({ line, ruleId }) => `${String(line)}:${ruleId ?? 'inline-config'}`)
+    .sort();
+
+describe('fixtures', () => {
+  it.each(fixtures)('%s reports exactly the findings its comments mark', (path) => {
+    expect(findings.has(path)).toBe(true);
+    expect(actualIn(path)).toEqual(expectedIn(path));
+  });
+});
 
 describe('module boundaries', () => {
   it.each([
@@ -105,7 +136,7 @@ describe('code rules', () => {
 
   it('ignores inline eslint-disable and still reports the violation it hides', () => {
     const messages = findings.get('shared/ui/inline-disable.ts') ?? [];
-    expect(messages).toContainEqual({ ruleId: null, severity: 1 });
+    expect(messages).toContainEqual({ ruleId: null, severity: 1, line: 1 });
     expect(messages.map((message) => message.ruleId)).toContain(
       '@typescript-eslint/no-explicit-any',
     );
