@@ -1,0 +1,67 @@
+# ADR 0017: Font delivery — vendored static subsets, no metric fallback, Peyda slot
+
+- Status: Proposed
+- Date: 2026-10-27
+- Score: pending independent review (rubric: docs/project-plan.md §3)
+- Implements: ADR 0012 (Peyda headlines, Vazirmatn body, Shippori Mincho Latin display)
+
+## Context
+
+ADR 0012 chose the faces but not how they are delivered. Three facts from Phase 0 shape the
+delivery:
+
+- **Performance.** The DoD requires Lighthouse ≥ 95 on throttled mobile. With the variable
+  Vazirmatn, shaping Persian text cost about 270 ms of layout and `/fa` scored 0.79–0.95.
+  With static 400/700 files, layout was about 30 ms and all 12 runs scored 0.95–0.99.
+- **Correctness.** `next/font` adds a size-adjusted fallback, `local("Arial")`, with no
+  `unicode-range`. Placed between the Latin and Arabic-script subsets, it rendered Persian in
+  Arial wherever Arial has Arabic glyphs (Windows).
+- **Licensing.** Peyda is commercial, and this repository is **public**. Its files cannot be
+  committed.
+
+Google Fonts is not an option, because it is unreliable from Iran (ADR 0008).
+
+## Options considered
+
+| Option                                                                   | Pros                                                                                      | Cons                                                                               |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| A. `@fontsource` CSS import from `node_modules`                          | Zero setup                                                                                | No preload; no build-time control of the fallback; ties the build to pnpm's layout |
+| B. Variable font via `next/font/local`                                   | One file, every weight                                                                    | Measured ~270 ms layout on `/fa` and Lighthouse below 95                           |
+| **C. Vendored static subsets via `next/font/local`, no metric fallback** | Measured 0.95–0.99; files and licences live in the repo with checksums; build-independent | Each new weight is a deliberate addition (~20 KB each)                             |
+| D. System fonts only                                                     | Fastest                                                                                   | Breaks the brand (ADR 0012)                                                        |
+
+## Decision
+
+Option C:
+
+- **Vazirmatn** 400/700, Latin and Arabic-script subsets, as separate families so the browser
+  picks per glyph. Both are preloaded.
+- **Shippori Mincho** 400, Latin subset only. It is not preloaded, because Persian pages do not
+  use its glyphs.
+- Files and OFL licences are vendored in `src/shared/ui/fonts/files`, byte-identical to
+  `@fontsource` 5.3.0, with SHA-256 checksums in `SHA256SUMS`.
+- `adjustFontFallback: false`. The stack lists both Vazirmatn subsets before any system face,
+  and headings use Shippori Mincho, then the Persian headline slot.
+- **Peyda slot:** the `--font-heading-fa` CSS variable points at Vazirmatn until Peyda's web
+  licence is confirmed. Adding Peyda means one `localFont` declaration and one line of CSS.
+  Its files must come from a private source (the deploy host) while the repository is public.
+- An E2E test asserts the stacks and that the faces load on every page.
+
+## Consequences
+
+- **Cost:** about 100 KB of WOFF2 in the repository. Persian pages preload about 75 KB of fonts.
+- **Risk:**
+  - A future design needing more weights adds bytes. Each addition is measured against the
+    Lighthouse gate in CI.
+  - Without metric adjustment, a font swap can shift layout. The measured CLS was ≤ 0.002.
+- **Reversibility:** high. Switching to a variable font or another face is a font-module and
+  CSS change, and the E2E font test pins the expectation.
+- **Iran fit:** no runtime font request leaves the server, and files are not fetched at build
+  time either.
+
+## Revisit when
+
+- the design system (Phase 1) needs three or more weights of one family (re-measure the
+  variable font), or
+- Peyda's licence and files arrive, or
+- Lighthouse mobile median drops below 95 on any public page because of fonts.
