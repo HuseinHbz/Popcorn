@@ -9,9 +9,9 @@
     "node": ">=22.23.4"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 127.0.0.1",
     "lint": "next typegen && eslint --max-warnings=0 . && node scripts/check-raw-colors.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
