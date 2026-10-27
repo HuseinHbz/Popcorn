@@ -128,6 +128,8 @@ jobs:
           persist-credentials: false
       - run: cp .env.example .env
       - run: docker compose config --quiet
+      - name: Every published port binds to 127.0.0.1
+        run: docker compose config --format json | jq -e '[.services[].ports[]? | .host_ip] | length > 0 and all(. == "127.0.0.1")'
       - run: docker compose up --detach --wait --wait-timeout 120
       - name: Postgres has btree_gist
         run: docker compose exec -T postgres psql -U popcorn -d popcorn -tAc "select 1 from pg_extension where extname = 'btree_gist'" | grep -qx 1
