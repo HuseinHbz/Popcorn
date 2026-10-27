@@ -113,6 +113,14 @@ jobs:
         run: node scripts/check-node-version.ts
       - name: The pinned package manager has no Moderate, High or Critical advisory
         run: node scripts/check-package-manager.ts
+      # Positive controls: each check must still fail, for the right reason, on a pin known to
+      # be bad. A check that cannot fail (or fails only on a network error) proves nothing.
+      - name: The checks still catch Node 22.22.1 and pnpm 10.28.0
+        run: |
+          output=$(node scripts/check-node-version.ts 22.22.1 2>&1) && exit 1
+          grep -q 'newer security releases' <<<"$output"
+          output=$(node scripts/check-package-manager.ts pnpm@10.28.0 2>&1) && exit 1
+          grep -q 'pnpm@10.28.0: high:' <<<"$output"
 
   build:
     name: Verify (lint · format · typecheck · tests · build) · E2E (axe) · Lighthouse

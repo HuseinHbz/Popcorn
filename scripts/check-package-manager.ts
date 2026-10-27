@@ -15,20 +15,27 @@ export function parsePackageManager(field: string): { name: string; version: str
   return { name: match[1], version: match[2] };
 }
 
+const SEVERITIES = new Set(['info', 'low', 'moderate', 'high', 'critical']);
+
 /**
  * Validates the bulk advisory answer for `name`. `{}` means no advisories; any other shape
- * (an error page, a renamed field) fails instead of passing.
+ * (an error page, a wrapped or re-keyed answer, an unknown severity) fails instead of passing.
  */
 export function parseAdvisories(data: unknown, name: string): Advisory[] {
   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
     throw new Error('npm advisory API: expected an object');
   }
+  const keys = Object.keys(data);
+  if (keys.some((key) => key !== name)) {
+    throw new Error(`npm advisory API: unexpected keys ${keys.join(', ')}`);
+  }
   const entries: unknown = (data as Record<string, unknown>)[name] ?? [];
   if (!Array.isArray(entries)) throw new Error(`npm advisory API: ${name} is not a list`);
   return entries.map((entry: unknown) => {
     const { severity, title, url } = (entry ?? {}) as Record<string, unknown>;
-    if (typeof severity !== 'string')
-      throw new Error('npm advisory API: advisory without severity');
+    if (typeof severity !== 'string' || !SEVERITIES.has(severity)) {
+      throw new Error(`npm advisory API: unknown severity ${String(severity)}`);
+    }
     return {
       severity,
       ...(typeof title === 'string' && { title }),
