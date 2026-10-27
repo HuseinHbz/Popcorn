@@ -6,17 +6,17 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 ### Added
 
-- Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, localized and accessible 404 pages for every unknown path.
+- Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, localized and accessible 404 pages for every unknown path, never cached (a `global-not-found.tsx` for single segments such as `/api`, ADR 0018).
 - Module skeleton for the ten plan modules (`domain`, `server`, `ui` entries) and `shared/auth`; `pnpm verify` (lint, format, typecheck, tests with coverage, build).
 - `src/shared/config/env.ts`: Zod-validated environment; the server refuses to start on an invalid env and never prints values; `APP_ENV` is required, and production rejects placeholders, password-less service URLs and short S3 secrets.
 - `src/shared/lib`: `toPersianDigits`, `formatToman` (BIGINT Rial → grouped Toman) and `formatJalali` (Persian calendar, Asia/Tehran), at 100% coverage.
-- Fonts: self-hosted static Vazirmatn subsets and Shippori Mincho (Latin display) with checksums; a `--font-heading-fa` slot for Peyda (ADR 0017).
-- Enforced engineering rules (ADR 0015): module boundaries (`eslint-plugin-boundaries`), pure `domain/` and `shared/lib` (no packages, I/O, clock or randomness), tokens only (no raw or named colours, no Tailwind arbitrary values), user-facing text only through next-intl, no inline disables, size limits; every rule proven by fixture tests.
-- Tooling: pnpm 10.34.9 with exact pins, `strictDepBuilds` and a 24-hour minimum release age; Node 22.23.4; Prettier, Husky + lint-staged + commitlint; Vitest; Playwright + axe; Lighthouse CI.
-- Local services via `docker-compose.dev.yml`: Postgres 17 (`btree_gist`, least-privilege `popcorn_app` role), Redis 7 (password kept out of argv), SeaweedFS S3; all digest-pinned and bound to 127.0.0.1.
-- CI (ADR 0016): commit-message and audit gates, `pnpm verify`, E2E, Lighthouse with a score summary, Semgrep, gitleaks, Compose auth checks and an S3 round trip, weekly freshness checks for Node, pnpm and the risk register; actions and images pinned by SHA/digest; Dependabot with cooldown.
+- Fonts: self-hosted static Vazirmatn subsets and Shippori Mincho (Latin display) with checksums and `unicode-range`, so Persian pages never download Shippori; a `--font-heading-fa` slot for Peyda (ADR 0017).
+- Enforced engineering rules (ADR 0015): module boundaries (`eslint-plugin-boundaries`), pure `domain/` and `shared/lib` (no packages, I/O, clock or randomness), tokens only (no raw or named colours, no Tailwind arbitrary values or properties, no inline spacing, radius or font values), user-facing text only through next-intl (wrapped, conditional and button text included), no `eval` or raw HTML, no inline disables, size limits; every rule proven line by line by fixture tests.
+- Tooling: pnpm 10.34.9 pinned by tarball hash and installed with Corepack, exact pins, `strictDepBuilds` and a 24-hour minimum release age; Node 22.23.4; Prettier, Husky + lint-staged + commitlint; Vitest; Playwright + axe; Lighthouse CI.
+- Local services via `docker-compose.dev.yml`: Postgres 17 (`btree_gist`, least-privilege `popcorn_app` role), Redis 7 (password kept out of argv), SeaweedFS S3 (telemetry and extra services off, on its own network); all digest-pinned and bound to 127.0.0.1.
+- CI (ADR 0016): commit-message and audit gates, `pnpm verify`, E2E, Lighthouse asserted on the median of 5 runs with a score summary, Semgrep, gitleaks, Compose auth checks and an S3 round trip, freshness checks (on every push and weekly) for Node security releases and end of life, pnpm advisories and the risk register; actions and images pinned by SHA/digest; Dependabot with cooldown.
 - Security headers: CSP baseline, HSTS, frame denial, nosniff, Referrer-Policy, Permissions-Policy, COOP, CORP.
-- Docs: story `platform-foundation`, ADRs 0013–0017 (proposed), security risk register, Phase 0 scorecards.
+- Docs: story `platform-foundation`, ADRs 0013–0018 (proposed), security risk register, Phase 0 scorecards and responses.
 
 ### Changed
 
