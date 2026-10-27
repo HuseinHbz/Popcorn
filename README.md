@@ -44,9 +44,11 @@ CI (`.github/workflows/ci.yml`) runs on every push and weekly. It runs `pnpm ver
 
 - Conventional Commit checks;
 - dependency audits (accepted risks only through the risk register);
-- Semgrep and gitleaks;
-- Compose service and auth checks, including an S3 round trip;
-- Node and pnpm freshness (ADR 0016).
+- Semgrep and gitleaks, which the repository cannot switch off (pinned configuration, no inline
+  suppressions; exceptions only in `.gitleaksignore`, each with a reason);
+- Compose service and auth checks, including an S3 round trip and object-store isolation;
+- Node and pnpm freshness, with positive controls that must still fail on known-bad pins
+  (ADR 0014, ADR 0016).
 
 ## Documents
 
