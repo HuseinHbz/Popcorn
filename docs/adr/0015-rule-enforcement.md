@@ -58,8 +58,10 @@ asserts it fires.
   - In CSS, `scripts/check-raw-colors.ts` bans hex, colour functions and the 148 named colours
     outside `@theme`.
   - SVG files are brand artwork and exempt.
-- **i18n:** `react/jsx-no-literals` (props ignored), plus a ban on literal `alt`, `title`,
-  `placeholder`, `label` and `aria-*` text.
+- **i18n:** `react/jsx-no-literals` with `noStrings` (so `{'text'}` counts too; props ignored),
+  plus a ban on literal `alt`, `title`, `placeholder`, `label` and `aria-*` text, including as a
+  branch of `?:`, `||`, `&&` or `??`, and on the literal `value` of submit, reset and button
+  inputs. A literal passed to a function, such as a message key, is allowed.
 - **Size and types:** `max-lines-per-function: 40`, `max-lines: 300`, no `any`, no `@ts-ignore`.
 
 ## Consequences
