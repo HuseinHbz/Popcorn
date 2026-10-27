@@ -51,9 +51,10 @@ Option C:
     security release in the pinned major line, or when that line has reached end of life
     (`scripts/check-node-version.ts`, reading nodejs/Release `schedule.json`). It warns 90 days
     before the end of life; Node 22 ends on 2027-04-30.
-  - It also fails when the pinned pnpm has a High or Critical advisory, checked against the npm
-    registry's advisory API (`scripts/check-package-manager.ts`). The pnpm 10.28.0 pin would
-    have failed this check.
+  - It also fails when the pinned pnpm has a Moderate, High or Critical advisory, checked
+    against the npm registry's advisory API (`scripts/check-package-manager.ts`). Moderate counts
+    here, unlike the dependency audit, because pnpm's Moderate advisories include
+    lockfile-integrity bypasses. The pnpm 10.28.0 pin fails this check (verified).
   - `engine-strict` stays off: it applies to every transitive dependency and would block installs
     over a patch version.
 - **Next.js 16 conventions:** locale routing lives in `src/proxy.ts`, the locale is read through
