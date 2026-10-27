@@ -99,6 +99,8 @@ jobs:
           node-version-file: .nvmrc
       - name: No accepted risk is past its review date
         run: node scripts/check-risk-register.ts
+      - name: .nvmrc has every Node security release of its major line
+        run: node scripts/check-node-version.ts
 
   build:
     name: Build · E2E (axe) · Lighthouse
