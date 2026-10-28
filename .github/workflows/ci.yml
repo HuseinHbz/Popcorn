@@ -25,6 +25,8 @@ permissions:
 # - Never pipe into a reader that can stop early (`grep -q`, `head`): the writer then fails
 #   on the closed pipe, and the pipeline fails although the reader matched. Capture the
 #   output first, `out=$(cmd)`, then `grep -q … <<<"$out"`.
+# - A writer that exits non-zero on purpose (`pnpm audit --json` on any finding) must be
+#   told the threshold the reader checks.
 # Never negate a command with `!` unless it is the step's last: bash ignores `set -e` for it.
 defaults:
   run:
@@ -72,7 +74,7 @@ jobs:
       - name: Dependency audit (accepted risks in docs/security/risk-register.md)
         run: pnpm audit --audit-level=high
       - name: Production dependency audit (no accepted risks apply)
-        run: pnpm audit --prod --json | jq -e '.metadata.vulnerabilities | (.high + .critical) == 0'
+        run: pnpm audit --prod --audit-level=high --json | jq -e '.metadata.vulnerabilities | (.high + .critical) == 0'
 
   secrets:
     name: Secret scan (gitleaks)
