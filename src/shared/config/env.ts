@@ -1,10 +1,17 @@
 import { z } from 'zod';
 
-/** Any spelling of the `.env.example` placeholder: change-me, CHANGE_ME, ChangeMe, change.me. */
+/**
+ * Common spellings of the `.env.example` placeholder (change-me, CHANGE_ME, ChangeMe,
+ * change.me), also when percent-encoded once. A heuristic: it cannot catch every disguise.
+ */
 const PLACEHOLDER = /change[-_ .]?me/i;
-/** Production secrets are generated, so a short one is a typo or a test value. */
+/**
+ * Production secrets are generated, so a short one, or one with few distinct characters
+ * ('x' repeated), is a typo or a test value.
+ */
 const MIN_S3_SECRET = 32;
 const MIN_SERVICE_PASSWORD = 16;
+const MIN_DISTINCT_CHARACTERS = 8;
 /** Hosts reached without leaving the machine or the private container network. */
 const LOCAL_HOST = /^(?:localhost|127(?:\.\d{1,3}){3}|\[::1\]|[a-z0-9-]+)$/i;
 
@@ -44,13 +51,21 @@ function decoded(value: string): string {
   }
 }
 
-function passwordProblem(key: 'DATABASE_URL' | 'REDIS_URL', value: string): string | undefined {
-  const password = decoded(new URL(value).password);
-  if (password === '') return `${key}: has no password`;
-  if (password.length < MIN_SERVICE_PASSWORD) {
-    return `${key}: password shorter than ${String(MIN_SERVICE_PASSWORD)} characters`;
+/** Why `secret` cannot be a generated secret of at least `minLength`, if it cannot. */
+function weakness(secret: string, minLength: number): string | undefined {
+  const trimmed = secret.trim();
+  if (trimmed.length < minLength) return `shorter than ${String(minLength)} characters`;
+  if (new Set(trimmed).size < MIN_DISTINCT_CHARACTERS) {
+    return `uses fewer than ${String(MIN_DISTINCT_CHARACTERS)} distinct characters`;
   }
   return undefined;
+}
+
+function passwordProblem(key: 'DATABASE_URL' | 'REDIS_URL', value: string): string | undefined {
+  const password = decoded(new URL(value).password).trim();
+  if (password === '') return `${key}: has no password`;
+  const weak = weakness(password, MIN_SERVICE_PASSWORD);
+  return weak && `${key}: password ${weak}`;
 }
 
 /** Rules that only production enforces: local services run with throwaway credentials. */
@@ -63,9 +78,8 @@ function productionProblems(env: Env): string[] {
     const problem = passwordProblem(key, env[key]);
     if (problem) problems.push(problem);
   }
-  if (env.S3_SECRET_KEY.trim().length < MIN_S3_SECRET) {
-    problems.push(`S3_SECRET_KEY: shorter than ${String(MIN_S3_SECRET)} characters`);
-  }
+  const weakSecret = weakness(env.S3_SECRET_KEY, MIN_S3_SECRET);
+  if (weakSecret) problems.push(`S3_SECRET_KEY: ${weakSecret}`);
   const s3 = new URL(env.S3_ENDPOINT);
   if (s3.protocol !== 'https:' && !LOCAL_HOST.test(s3.hostname)) {
     problems.push('S3_ENDPOINT: must use https unless the host is local');
