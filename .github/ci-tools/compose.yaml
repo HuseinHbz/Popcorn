@@ -58,6 +58,8 @@ services:
       - --error
       # Inline suppression comments in the scanned code have no effect (ADR 0016).
       - --disable-nosem
+      # Every file whatever its size (the default skips files over 1 MB without failing).
+      - --max-target-bytes=0
       - --config=p/typescript
       - --config=p/react
       - --config=p/nextjs

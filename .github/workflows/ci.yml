@@ -184,9 +184,11 @@ jobs:
           docker compose -f .github/ci-tools/compose.yaml run --rm \
             -v "$tree:/src:ro" -v "$report:/report" semgrep
           # Semgrep scans a missing or empty directory without complaint: the report must
-          # list a file from src/ and one from tests/.
+          # list a file from src/ and one from tests/. A file it could not finish (a timeout,
+          # a parse error) shows only in the report's errors, and fails here.
           jq -e '[.paths.scanned[] | select(. == "src/proxy.ts" or . == "tests/lint-rules.test.ts")]
             | length == 2' "$report/semgrep.json"
+          jq -e '.errors == []' "$report/semgrep.json"
 
   freshness:
     name: Supply-chain freshness
