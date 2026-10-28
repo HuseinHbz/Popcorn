@@ -19,6 +19,13 @@ concurrency:
 permissions:
   contents: read
 
+# `shell: bash` makes Actions run every step as `bash --noprofile --norc -eo pipefail`; the
+# default is `bash -e`, without pipefail, so a failing command before a pipe would pass.
+# Never negate a command with `!` unless it is the step's last: bash ignores `set -e` for it.
+defaults:
+  run:
+    shell: bash
+
 # Third-party actions are pinned to full commit SHAs (tag in the trailing comment);
 # Dependabot keeps them current (.github/dependabot.yml).
 
@@ -218,7 +225,10 @@ jobs:
           docker compose config --format json \
             | jq -e '.services.objectstore.command | index("-master.telemetry=false") != null'
           # With telemetry on, weed logs "Reporting anonymous cluster statistics to …telemetry…".
-          ! docker compose logs objectstore 2>&1 | grep -qi telemetry
+          if docker compose logs objectstore 2>&1 | grep -qi telemetry; then
+            echo '::error::object-store telemetry is on'
+            exit 1
+          fi
           # The probe reaches the filer from inside the object store …
           docker compose exec -T objectstore wget -q -T 3 -O /dev/null http://127.0.0.1:8888/
           # … and not from the other services, where the name does not even resolve.
