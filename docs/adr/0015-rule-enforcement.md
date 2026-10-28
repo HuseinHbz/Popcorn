@@ -40,6 +40,12 @@ Constraints:
 Option F. Every rule below has a fixture in `tests/fixtures/src`, and `tests/lint-rules.test.ts`
 asserts it fires.
 
+- **File types:** the project rules apply to every JavaScript and TypeScript extension under
+  `src/` (`ts`, `tsx`, `mts`, `cts`, `js`, `jsx`, `mjs`, `cjs`), proven by `.js` and `.mjs`
+  fixtures. Only `.ts` and `.tsx` may exist there (`tests/source-extensions.test.ts`), and
+  Next.js routes only those (`pageExtensions`), so a stray `page.js` is neither linted past nor
+  served.
+
 - **No inline disables:**
   - `linterOptions.noInlineConfig` ignores and reports inline `eslint-disable`.
   - An exception is an override in `eslint.config.mjs` next to its ADR link. This is stricter
@@ -71,17 +77,23 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
   `value` of submit, reset and button inputs, and on literal text in JSX children, each also as
   a branch or wrapped, two levels deep, as for tokens. A literal passed to a function, such as a
   message key, is allowed.
-- **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs and raw HTML are
-  banned everywhere. For raw HTML that means:
+- **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs (plain strings, and
+  templates built with expressions) and raw HTML are banned in every source file. For raw HTML
+  that means:
   - `dangerouslySetInnerHTML` and `srcDoc` as a JSX prop, and any object key naming a sink
     (`createElement` props, spreads, `Object.assign(node, { innerHTML })`);
   - any string or static template that is exactly a sink's name, outside type positions: string
     keys, computed members, `Reflect.set`, `setAttribute('srcdoc')`, a name kept in a variable;
-  - assigning `innerHTML`, `outerHTML` or `srcdoc`, also through `as`, `satisfies` or `!`, and an
-    `on…` attribute through `setAttribute`;
-  - `insertAdjacentHTML`, `createContextualFragment`, `parseFromString`, `setHTMLUnsafe`,
-    `parseHTMLUnsafe`, and `write`/`writeln` on `document` or on a `.document` or
-    `.contentDocument`.
+  - writing `innerHTML`, `outerHTML` or `srcdoc`: by assignment, also through `as`, `satisfies`
+    or `!`, and as the target of an array or object pattern, a default value or a `for…of/in`
+    loop;
+  - an `on…` attribute name, as a string or a template, through `setAttribute`,
+    `setAttributeNS`, `createAttribute` or `createAttributeNS`;
+  - any reference to `insertAdjacentHTML`, `createContextualFragment`, `parseFromString`,
+    `setHTMLUnsafe`, `parseHTMLUnsafe` or `execCommand` (called, through `.call`, `.apply` or
+    `.bind`, or destructured), and `write`/`writeln` on `document` or on a `.document` or
+    `.contentDocument`;
+  - a JSX `<script>` or `<style>` child expression, which React writes out as it is.
 
   Semgrep catches some of these too, but only in CI. A JSON-LD script tag will need a
   `react/no-danger` override with an ADR link.
@@ -105,11 +117,15 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
       round-5 review, and every rule follows them two levels deep since round 6.
     - `write` on a document held in a variable (`const d = frame.contentDocument; d.write(x)`)
       is caught only by the type-aware `@typescript-eslint/no-deprecated`, and a sink name
-      built at run time by nothing.
+      built at run time by nothing. An HTML `Blob` opened through `URL.createObjectURL` is
+      left to review.
+    - The structural answer is Trusted Types: with the Phase 2 nonce CSP,
+      `require-trusted-types-for 'script'` makes the browser reject a string at every DOM
+      sink, whatever its syntax (risk register).
     - The purity rule sees the clock only in the calls it lists: an Intl `format(d)` whose `d`
       is `undefined` at run time also reads the clock.
 
-    Six review rounds kept finding new shapes. Code review remains a control, each new shape
+    Seven review rounds kept finding new shapes. Code review remains a control, each new shape
     found becomes a selector with a fixture line, and a type-aware rule replaces the selectors
     if the list keeps growing (see Revisit).
 - **Reversibility:** high. Each rule is a config entry, and removing one is a one-line diff
