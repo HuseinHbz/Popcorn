@@ -9,10 +9,19 @@ import tseslint from 'typescript-eslint';
 
 /**
  * A value chosen by `?:`, `||`, `&&` or `??`, or wrapped by a TypeScript `as`, `satisfies` or
- * `!`: each branch, and the wrapped value, is checked like a plain value.
+ * `!`: each branch, and the wrapped value, is checked like a plain value, two levels deep in
+ * every rule that uses it (`(ok ? 'red' : 'blue') as string`).
  */
 const BRANCH =
   ':matches(ConditionalExpression, LogicalExpression, TSAsExpression, TSSatisfiesExpression, TSNonNullExpression)';
+
+/** `value` where `parent` ends (`… > .value` or `… > `), and inside one or two BRANCHes there. */
+const branches = (parent, value) => [
+  `${parent}${value}`,
+  `${parent}${BRANCH} > ${value}`,
+  `${parent}${BRANCH} > ${BRANCH} > ${value}`,
+];
+const rules = (message, selectors) => selectors.map((selector) => ({ selector, message }));
 
 // CLAUDE.md: only design tokens for colour, spacing, radius and font. Bans raw colours
 // (hex, colour functions) anywhere; Tailwind arbitrary values and properties (`w-[13px]`,
@@ -42,64 +51,50 @@ const COLOR_PROPERTY = `Property${keyMatches(COLOR_KEY)}`;
 const BEARING_PROPERTY = `Property${keyMatches(COLOR_BEARING_KEY)}:not(${keyMatches(COLOR_KEY)})`;
 const SIZE_PROPERTY = `JSXAttribute[name.name='style'] Property${keyMatches(SIZE_KEY)}`;
 const TOKEN_SYNTAX = [
-  [`Literal[value=${RAW_COLOR}]`, 'Use a design token, not a raw colour.'],
-  [`TemplateElement[value.raw=${RAW_COLOR}]`, 'Use a design token, not a raw colour.'],
-  [`Literal[value=${ARBITRARY_VALUE}]`, 'Use a theme token, not a Tailwind arbitrary value.'],
-  [
+  ...rules('Use a design token, not a raw colour.', [
+    `Literal[value=${RAW_COLOR}]`,
+    `TemplateElement[value.raw=${RAW_COLOR}]`,
+  ]),
+  ...rules('Use a theme token, not a Tailwind arbitrary value.', [
+    `Literal[value=${ARBITRARY_VALUE}]`,
     `TemplateElement[value.raw=${ARBITRARY_VALUE}]`,
-    'Use a theme token, not a Tailwind arbitrary value.',
-  ],
-  [`${COLOR_PROPERTY} > .value${VALUE}`, 'Use a design-token class, not an inline colour value.'],
-  [
-    `${COLOR_PROPERTY} > .value${BRANCH} > ${VALUE}`,
+  ]),
+  ...rules(
     'Use a design-token class, not an inline colour value.',
-  ],
-  [`${BEARING_PROPERTY} > .value${NAMED_VALUE}`, 'Use a design token, not a named colour.'],
-  [
-    `${BEARING_PROPERTY} > .value${BRANCH} > ${NAMED_VALUE}`,
-    'Use a design token, not a named colour.',
-  ],
-  [
+    branches(`${COLOR_PROPERTY} > .value`, VALUE),
+  ),
+  ...rules('Use a design token, not a named colour.', [
+    ...branches(`${BEARING_PROPERTY} > .value`, NAMED_VALUE),
     `JSXAttribute[name.name=${SVG_COLOR_ATTRIBUTE}] Literal[value=${NAMED_COLOR}]`,
-    'Use a design token, not a named colour.',
-  ],
-  [
     `JSXAttribute[name.name=${SVG_COLOR_ATTRIBUTE}] TemplateElement[value.raw=${NAMED_COLOR}]`,
-    'Use a design token, not a named colour.',
-  ],
-  [
-    `${SIZE_PROPERTY} > .value${SIZE_VALUE}`,
+  ]),
+  ...rules(
     'Use a spacing, radius or font token class, not an inline value.',
-  ],
-  [
-    `${SIZE_PROPERTY} > .value${BRANCH} > ${SIZE_VALUE}`,
-    'Use a spacing, radius or font token class, not an inline value.',
-  ],
-].map(([selector, message]) => ({ selector, message }));
+    branches(`${SIZE_PROPERTY} > .value`, SIZE_VALUE),
+  ),
+];
 
 // CLAUDE.md: every user-facing string goes through next-intl. JSX text, wrapped or not,
 // is covered by react/jsx-no-literals (noStrings); these catch literal text in user-facing
 // attributes, in the visible `value` of submit, reset and button inputs, and in JSX
-// children, directly or as a branch of `?:`, `||`, `&&` or `??` (two levels deep). A literal
-// passed to a function (a message key) is not text and is allowed.
+// children, directly or inside a BRANCH. A literal passed to a function (a message key) is
+// not text and is allowed.
 const TEXT_ATTRIBUTE =
   '/^(?:alt|title|placeholder|label|aria-label|aria-description|aria-placeholder|aria-roledescription|aria-valuetext)$/';
 const TEXT = ':matches(Literal[value=/\\S/], TemplateLiteral)';
 const BUTTON_INPUT =
   "JSXOpeningElement[name.name='input']:has(JSXAttribute[name.name='type'] > Literal[value=/^(?:submit|reset|button)$/])";
-const I18N_MESSAGE = 'User-facing text comes from next-intl, not a literal.';
-const I18N_SYNTAX = [
+const I18N_SYNTAX = rules('User-facing text comes from next-intl, not a literal.', [
   `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > ${TEXT}`,
-  `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > ${TEXT}`,
-  `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > ${BRANCH} > ${TEXT}`,
-  `JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > ${BRANCH} > ${BRANCH} > ${TEXT}`,
+  ...branches(`JSXAttribute[name.name=${TEXT_ATTRIBUTE}] > JSXExpressionContainer > `, TEXT),
   `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > ${TEXT}`,
-  `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > JSXExpressionContainer > ${TEXT}`,
-  `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > JSXExpressionContainer > ${BRANCH} > ${TEXT}`,
-  // JSX children: jsx-no-literals sees `{'text'}` but not text inside a branch.
-  `:matches(JSXElement, JSXFragment) > JSXExpressionContainer > ${BRANCH} > ${TEXT}`,
-  `:matches(JSXElement, JSXFragment) > JSXExpressionContainer > ${BRANCH} > ${BRANCH} > ${TEXT}`,
-].map((selector) => ({ selector, message: I18N_MESSAGE }));
+  ...branches(
+    `${BUTTON_INPUT} > JSXAttribute[name.name='value'] > JSXExpressionContainer > `,
+    TEXT,
+  ),
+  // JSX children: jsx-no-literals sees `{'text'}` itself (dropped here), not text in a branch.
+  ...branches(':matches(JSXElement, JSXFragment) > JSXExpressionContainer > ', TEXT).slice(1),
+]);
 
 // Pure code reads no ambient state: the clock and randomness are passed in.
 const PURE_MESSAGE = '`domain/` and `shared/lib` must stay pure: pass the clock or randomness in.';
