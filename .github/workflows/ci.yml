@@ -86,12 +86,18 @@ jobs:
           # these checks keep config files and markers out of the repository as well.
           files=$(git ls-files -- '*.gitleaks.toml' '*.semgrepignore')
           if [ -n "$files" ]; then echo "::error::scanner config in the repository: $files"; exit 1; fi
-          # Scorecards quote the markers when they report on them, and this step names them,
-          # so both are skipped here.
-          marker='gitleaks:al''low|no''sem'
+          # A marker on its own: not part of a flag name such as --disable-no…sem. This step
+          # names the markers, and scorecards quote them when they report on one.
+          marker='gitleaks:al''low|(^|[^a-z-])no''sem'
           found=$(git log --all -i -E -G"$marker" --format='%h %s' -- . \
             ':!docs/scorecards' ':!.github/workflows/ci.yml')
           if [ -n "$found" ]; then echo "::error::inline scanner suppression in: $found"; exit 1; fi
+          # Only the two security reviews that report on markers may quote one (checked in the
+          # tree, so a squash merge keeps it valid); any other scorecard fails.
+          quoted=$(git grep -l -i -E "$marker" -- docs/scorecards \
+            ':!docs/scorecards/phase-0/security-foundation-round-4.md' \
+            ':!docs/scorecards/phase-0/security-foundation-round-5.md' || true)
+          if [ -n "$quoted" ]; then echo "::error::scanner marker quoted in: $quoted"; exit 1; fi
       # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
       # line in a .gitattributes would hide that path from the whole history scan, and an
       # `export-ignore` line would drop it from the tree scan below. This file outranks every
