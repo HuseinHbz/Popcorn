@@ -8,13 +8,16 @@ services:
     image: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
     # gitleaks reads .gitleaksignore from the scanned repository and its working directory;
     # --config pins the rules and --ignore-gitleaks-allow disables inline allow comments, so
-    # the scanned code cannot relax the scan (ADR 0016).
+    # the scanned code cannot relax the scan (ADR 0016). gitleaks' default `git log` options
+    # skip merge diffs and type changes (a symlink turned into a file); `-m` and a
+    # --diff-filter without `t` scan both. gitleaks splits --log-opts on spaces.
     working_dir: /repo
     volumes:
       - ../..:/repo:ro
     command:
       - git
       - /repo
+      - --log-opts=--full-history --all -m --diff-filter=uxdb
       - --config
       - /repo/.github/ci-tools/gitleaks.toml
       - --ignore-gitleaks-allow
