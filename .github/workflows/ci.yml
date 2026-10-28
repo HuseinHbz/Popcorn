@@ -119,16 +119,22 @@ jobs:
       - run: printf '* !diff\n* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
       - name: Scan full history
         run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
-      # The history scan reads commit diffs only, so a secret that enters through a merge
-      # commit is never seen there, and a rebase merge re-binds the commit-bound exceptions.
-      # The tree is scanned with no exceptions: .gitleaksignore entries name a commit, which
-      # a directory scan has none of.
+      # The tree at HEAD is scanned too, with no exceptions (.gitleaksignore entries name a
+      # commit, which a directory scan has none of), so neither an exception nor a rebase
+      # merge's new commit ids can leave a secret-like value in the tree.
       - name: Scan the current tree
         run: |
-          mkdir "$RUNNER_TEMP/tree"
-          git archive HEAD | tar -x -C "$RUNNER_TEMP/tree"
+          tree=$RUNNER_TEMP/tree report=$RUNNER_TEMP/report
+          mkdir "$tree" "$report"
+          git archive HEAD | tar -x -C "$tree"
+          test -s "$tree/package.json"
+          # gitleaks reports a missing or unreadable directory as clean. A canary made now and
+          # never committed must be the only finding: that proves the tree was mounted and
+          # read and that the rules match, and any real finding still fails the step.
+          printf 'token = "ghp_%s"\n' "$(openssl rand -hex 18)" > "$tree/.ci-canary"
           docker compose -f .github/ci-tools/compose.yaml run --rm \
-            -v "$RUNNER_TEMP/tree:/tree:ro" gitleaks-tree
+            -v "$tree:/tree:ro" -v "$report:/report" gitleaks-tree && exit 1
+          jq -e 'length > 0 and all(.[]; .File == "/tree/.ci-canary")' "$report/tree.json"
       # Positive control: gitleaks reports a missing or empty directory as clean, so the tree
       # scan reads its rules from inside the tree and must fail when no tree is there.
       - name: The tree scan fails without a tree
