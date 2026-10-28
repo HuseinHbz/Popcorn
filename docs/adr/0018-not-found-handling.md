@@ -66,6 +66,14 @@ Option F:
   - A page that calls `notFound()` itself (for example, a menu item that does not exist, Phase 3)
     is not covered: Next.js renders that through the same error document as option D. The first
     such page must be handled and tested the same way, before it ships.
+  - The locale comes from next-intl's request header, which next-intl does not export as an API.
+    If it is renamed, `/en/x` silently turns Persian; the E2E `/en` case (`lang`, heading, home
+    link) fails in CI when that happens.
+  - The 404 has its own locale source, apart from the `[locale]` segment the pages use, so
+    anything rendered inside it must receive the locale explicitly. A link without it defaulted
+    to `/fa` on the English 404 after hydration (code review round 5); the E2E now checks the
+    home link's target in every case. The header only selects between the two locales and must
+    never be read for anything else (security review round 5, H7).
 - **Reversibility:** high. Restoring a catch-all and removing the flag and the file restores the
   previous behaviour.
 - **Iran fit:** no effect; everything is served by the app.
@@ -76,4 +84,5 @@ Option F:
 - `globalNotFound` becomes stable or is removed upstream (drop the flag, or move to its successor),
   or
 - Phase 5 adds `robots.txt`, `sitemap.xml` or other root files: they are routes of their own and
-  take precedence, and the E2E list must stop expecting a 404 for them.
+  take precedence, and the E2E list must stop expecting a 404 for them, or
+- next-intl renames or stops setting its locale header (upgrade notes; the E2E `/en` case).
