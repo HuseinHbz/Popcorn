@@ -67,15 +67,21 @@ Constraints:
     - `.git/info/attributes` (`* !diff`) outranks every `.gitattributes`, so no line there can
       hide a text file from the history scan;
     - CI fails on a `.gitleaks.toml` or `.semgrepignore` at any depth, and on an inline marker in
-      any commit (defence in depth: neither scanner honours one).
+      any commit outside the review scorecards; in the scorecards, only the two security
+      reviews that report on markers may quote one. This is defence in depth: neither scanner
+      honours a marker anywhere.
 
     The only exceptions are `.gitleaksignore` fingerprints, each with a reason;
     `tests/gitleaksignore.test.ts` fails on an entry that is not a fingerprint or has no reason of
     its own. An entry still lives in the repository it exempts, so a push can exempt its own
-    finding: the entry shows in the diff, and CODEOWNERS routes it to the owner.
+    finding: the entry shows in the diff, which the owner reads before merging.
 
-  - `.github/CODEOWNERS` routes changes to these controls (CI, scanner exceptions, dependency
-    settings, lint rules, security headers, environment rules, the risk register) to the owner.
+  - `.github/CODEOWNERS` lists these controls: CI, scanner exceptions and attributes,
+    dependency and runtime pins, lint rules and their tests, security headers, the proxy, start-up
+    validation, the local services, the risk register and the scorecards. With one maintainer,
+    who also authors every pull request, GitHub requests no review, so until a second maintainer
+    exists the control is the owner reading the diff of these paths before merging; the ruleset
+    then requires code-owner review (risk register).
   - Dependabot covers npm, GitHub Actions and both compose files, after a 3-day cooldown.
 
 ## Consequences

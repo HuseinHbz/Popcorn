@@ -1,11 +1,41 @@
 # Changes to the security and supply-chain controls are routed to the owner for review
-# (ADR 0016; security review round 4, G1). Enforced once the main ruleset requires
-# code-owner review (docs/security/risk-register.md, "Branch protection on main").
-/.github/                @HuseinHbz
-/.gitleaksignore         @HuseinHbz
-/package.json            @HuseinHbz
-/pnpm-workspace.yaml     @HuseinHbz
-/eslint.config.mjs       @HuseinHbz
-/next.config.ts          @HuseinHbz
-/src/shared/config/      @HuseinHbz
-/docs/security/          @HuseinHbz
+# (ADR 0016; security reviews round 4 G1, round 5 H4). With one maintainer, who is also the
+# author of every pull request, GitHub requests no review: until a second maintainer exists,
+# the control is the owner reading the diff of these paths before merging. Enforced once the
+# main ruleset requires code-owner review (docs/security/risk-register.md).
+
+# CI, scanner exceptions and attributes that could hide files from the scans
+/.github/                       @HuseinHbz
+/.gitleaksignore                @HuseinHbz
+/.gitattributes                 @HuseinHbz
+
+# Dependencies, runtime and package manager pins
+/package.json                   @HuseinHbz
+/pnpm-lock.yaml                 @HuseinHbz
+/pnpm-workspace.yaml            @HuseinHbz
+/.nvmrc                         @HuseinHbz
+
+# Rule enforcement and the tests that prove it
+/eslint.config.mjs              @HuseinHbz
+/scripts/                       @HuseinHbz
+/tests/lint-rules.test.ts       @HuseinHbz
+/tests/gitleaksignore.test.ts   @HuseinHbz
+/tests/fixtures/                @HuseinHbz
+/lighthouserc.json              @HuseinHbz
+/CLAUDE.md                      @HuseinHbz
+
+# Security headers, locale proxy and start-up environment validation
+/next.config.ts                 @HuseinHbz
+/src/proxy.ts                   @HuseinHbz
+/src/instrumentation.ts         @HuseinHbz
+/src/instrumentation-node.ts    @HuseinHbz
+/src/shared/config/             @HuseinHbz
+/.env.example                   @HuseinHbz
+
+# Local services: isolation, loopback ports, the least-privilege database role
+/docker-compose.dev.yml         @HuseinHbz
+/docker/                        @HuseinHbz
+
+# Security records and review scorecards
+/docs/security/                 @HuseinHbz
+/docs/scorecards/               @HuseinHbz
