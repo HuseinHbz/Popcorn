@@ -1,0 +1,6 @@
+# Copied into the exported tree as its .semgrepignore by the sast job (.github/workflows/ci.yml).
+# Any .semgrepignore replaces Semgrep's built-in list (tests/, test/, vendor/, build/, dist/,
+# …), so only the paths listed here are skipped.
+
+# Lint fixtures: code that breaks the rules on purpose, proven by tests/lint-rules.test.ts.
+tests/fixtures/

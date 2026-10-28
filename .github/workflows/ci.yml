@@ -165,8 +165,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The committed tree, as the tree scan exports it, with the pinned ignore file.
       - name: Semgrep (TypeScript, React, Next.js, secrets rule packs)
-        run: docker compose -f .github/ci-tools/compose.yaml run --rm semgrep
+        run: |
+          tree=$RUNNER_TEMP/tree report=$RUNNER_TEMP/report
+          mkdir "$tree" "$report"
+          printf '* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
+          git archive HEAD | tar -x -C "$tree"
+          cp .github/ci-tools/semgrepignore "$tree/.semgrepignore"
+          docker compose -f .github/ci-tools/compose.yaml run --rm \
+            -v "$tree:/src:ro" -v "$report:/report" semgrep
+          # Semgrep scans a missing or empty directory without complaint: the report must
+          # list a file from src/ and one from tests/.
+          jq -e '[.paths.scanned[] | select(. == "src/proxy.ts" or . == "tests/lint-rules.test.ts")]
+            | length == 2' "$report/semgrep.json"
 
   freshness:
     name: Supply-chain freshness
