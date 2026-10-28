@@ -1,8 +1,12 @@
-# Changes to the security and supply-chain controls are routed to the owner for review
-# (ADR 0016; security reviews round 4 G1, round 5 H4). With one maintainer, who is also the
-# author of every pull request, GitHub requests no review: until a second maintainer exists,
-# the control is the owner reading the diff of these paths before merging. Enforced once the
-# main ruleset requires code-owner review (docs/security/risk-register.md).
+# Every change is routed to the owner for review (ADR 0016; security reviews round 4 G1,
+# round 5 H4, round 6 J7). With one maintainer, who is also the author of every pull request,
+# GitHub requests no review: until a second maintainer exists, the control is the owner
+# reading the diff before merging. Enforced once the main ruleset requires code-owner review
+# (docs/security/risk-register.md).
+*                               @HuseinHbz
+
+# The paths below hold a control, so their diffs need the closest reading. Each line names the
+# same owner as the catch-all: the list is a record, not the rule.
 
 # CI, scanner exceptions and attributes that could hide files from the scans
 /.github/                       @HuseinHbz
@@ -14,19 +18,29 @@
 /pnpm-lock.yaml                 @HuseinHbz
 /pnpm-workspace.yaml            @HuseinHbz
 /.nvmrc                         @HuseinHbz
+/.npmrc                         @HuseinHbz
 
-# Rule enforcement and the tests that prove it
+# Rule enforcement, the gates, and the tests that prove them
 /eslint.config.mjs              @HuseinHbz
+/tsconfig.json                  @HuseinHbz
+/commitlint.config.mjs          @HuseinHbz
+/.husky/                        @HuseinHbz
 /scripts/                       @HuseinHbz
-/tests/lint-rules.test.ts       @HuseinHbz
-/tests/gitleaksignore.test.ts   @HuseinHbz
-/tests/fixtures/                @HuseinHbz
+/tests/                         @HuseinHbz
+/e2e/                           @HuseinHbz
+/vitest.config.mts              @HuseinHbz
+/playwright.config.ts           @HuseinHbz
 /lighthouserc.json              @HuseinHbz
-/CLAUDE.md                      @HuseinHbz
 
-# Security headers, locale proxy and start-up environment validation
+# Agent and reviewer instructions, including the /review gate
+/CLAUDE.md                      @HuseinHbz
+/.claude/                       @HuseinHbz
+
+# Security headers, the locale proxy and the locale header's readers, start-up validation
 /next.config.ts                 @HuseinHbz
 /src/proxy.ts                   @HuseinHbz
+/src/app/global-not-found.tsx   @HuseinHbz
+/src/shared/i18n/               @HuseinHbz
 /src/instrumentation.ts         @HuseinHbz
 /src/instrumentation-node.ts    @HuseinHbz
 /src/shared/config/             @HuseinHbz
@@ -36,6 +50,7 @@
 /docker-compose.dev.yml         @HuseinHbz
 /docker/                        @HuseinHbz
 
-# Security records and review scorecards
+# Security records, decisions and review scorecards
 /docs/security/                 @HuseinHbz
+/docs/adr/                      @HuseinHbz
 /docs/scorecards/               @HuseinHbz
