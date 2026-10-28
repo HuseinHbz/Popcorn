@@ -7,12 +7,19 @@ services:
   gitleaks:
     image: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
     # gitleaks reads .gitleaksignore from the scanned repository and its working directory;
-    # --config pins the rules, so the scanned code cannot relax them (ADR 0016).
+    # --config pins the rules and --ignore-gitleaks-allow disables inline allow comments, so
+    # the scanned code cannot relax the scan (ADR 0016).
     working_dir: /repo
     volumes:
       - ../..:/repo:ro
     command:
-      ['git', '/repo', '--config', '/repo/.github/ci-tools/gitleaks.toml', '--redact', '--verbose']
+      - git
+      - /repo
+      - --config
+      - /repo/.github/ci-tools/gitleaks.toml
+      - --ignore-gitleaks-allow
+      - --redact
+      - --verbose
 
   semgrep:
     image: semgrep/semgrep:1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6
@@ -24,6 +31,8 @@ services:
       - scan
       - --metrics=off
       - --error
+      # Inline suppression comments in the scanned code have no effect (ADR 0016).
+      - --disable-nosem
       - --config=p/typescript
       - --config=p/react
       - --config=p/nextjs

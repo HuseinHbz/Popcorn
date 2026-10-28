@@ -82,13 +82,20 @@ jobs:
       - name: No scanner can be switched off from inside the repository
         run: |
           # Exceptions live only in .gitleaksignore: fingerprints, each with a reason (ADR 0016).
-          for file in .gitleaks.toml .semgrepignore; do
-            if [ -e "$file" ]; then echo "::error::$file must not exist"; exit 1; fi
-          done
-          # No inline suppression in any commit; scorecards quote the markers, so they are skipped.
-          marker='gitleaks:al''low|nosem''grep'
-          found=$(git log --all -E -G"$marker" --format='%h %s' -- . ':!docs/scorecards')
+          # The scanners ignore inline markers anyway (--ignore-gitleaks-allow, --disable-nosem);
+          # these checks keep config files and markers out of the repository as well.
+          files=$(git ls-files -- '*.gitleaks.toml' '*.semgrepignore')
+          if [ -n "$files" ]; then echo "::error::scanner config in the repository: $files"; exit 1; fi
+          # Scorecards quote the markers when they report on them, and this step names them,
+          # so both are skipped here.
+          marker='gitleaks:al''low|no''sem'
+          found=$(git log --all -i -E -G"$marker" --format='%h %s' -- . \
+            ':!docs/scorecards' ':!.github/workflows/ci.yml')
           if [ -n "$found" ]; then echo "::error::inline scanner suppression in: $found"; exit 1; fi
+      # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
+      # line in a .gitattributes would hide that path from the whole history scan. This file
+      # outranks every .gitattributes; fonts stay binary by content, text cannot be hidden.
+      - run: printf '* !diff\n' > .git/info/attributes
       - name: Scan full history
         run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
 
