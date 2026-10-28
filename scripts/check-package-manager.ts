@@ -29,7 +29,7 @@ export function parseAdvisories(data: unknown, name: string): Advisory[] {
   if (keys.some((key) => key !== name)) {
     throw new Error(`npm advisory API: unexpected keys ${keys.join(', ')}`);
   }
-  const entries: unknown = (data as Record<string, unknown>)[name] ?? [];
+  const entries: unknown = name in data ? (data as Record<string, unknown>)[name] : [];
   if (!Array.isArray(entries)) throw new Error(`npm advisory API: ${name} is not a list`);
   return entries.map((entry: unknown) => {
     const { severity, title, url } = (entry ?? {}) as Record<string, unknown>;
