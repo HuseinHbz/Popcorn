@@ -122,6 +122,16 @@ jobs:
           git archive HEAD | tar -x -C "$RUNNER_TEMP/tree"
           docker compose -f .github/ci-tools/compose.yaml run --rm \
             -v "$RUNNER_TEMP/tree:/tree:ro" gitleaks-tree
+      # Positive control: gitleaks reports a missing or empty directory as clean, so the tree
+      # scan reads its rules from inside the tree and must fail when no tree is there.
+      - name: The tree scan fails without a tree
+        run: |
+          output=$(docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks-tree 2>&1) && exit 1
+          grep -q 'unable to load gitleaks config' <<<"$output"
+          mkdir "$RUNNER_TEMP/empty"
+          output=$(docker compose -f .github/ci-tools/compose.yaml run --rm \
+            -v "$RUNNER_TEMP/empty:/tree:ro" gitleaks-tree 2>&1) && exit 1
+          grep -q 'unable to load gitleaks config' <<<"$output"
 
   sast:
     name: Static analysis (Semgrep)
