@@ -22,16 +22,16 @@ services:
       - --verbose
 
   # The current tree, with the same pinned rules. The CI step mounts the exported tree at
-  # /tree (`run -v …:/tree:ro`); without that mount /tree does not exist and the scan fails.
+  # /tree (`run -v …:/tree:ro`). gitleaks reports a missing or empty directory as clean, so
+  # the rules are read from inside the tree: without the mount, or with an empty export,
+  # the configuration file is missing and the scan fails.
   gitleaks-tree:
     image: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
-    volumes:
-      - ./gitleaks.toml:/config/gitleaks.toml:ro
     command:
       - dir
       - /tree
       - --config
-      - /config/gitleaks.toml
+      - /tree/.github/ci-tools/gitleaks.toml
       - --ignore-gitleaks-allow
       - --redact
       - --verbose
