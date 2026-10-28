@@ -53,7 +53,8 @@ The other options were not run, so no figures are claimed for them.
   (`-master.telemetry=false`), WebDAV, the Iceberg and Lance catalogs, and the admin UI. The
   service runs on its own compose network, so no other container reaches its internal APIs.
 - CI performs a signed PUT/GET round trip, asserts that anonymous reads and writes answer 403,
-  that telemetry is off, and that another container cannot reach the filer.
+  that telemetry is off (exactly one telemetry flag, set off, and no telemetry line in the
+  log), and that another container cannot reach the filer.
 - Application code may only use S3 operations every candidate backend supports: put, get and
   delete object, presigned GET/PUT, and private buckets. No vendor-specific API.
 - Production storage is **not** decided here. Phase 5 chooses between a self-hosted SeaweedFS

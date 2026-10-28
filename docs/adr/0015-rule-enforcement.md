@@ -60,22 +60,32 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
     property (`color`, `fill`, `backgroundColor`, quoted keys and template literals included);
     the 148 named colours in colour-bearing values (`border: '1px solid red'`) and SVG colour
     attributes; and literal spacing, radius and font values (negative ones included) in inline
-    `style` attributes; each also as a branch of `?:`, `||`, `&&` or `??`, or wrapped in `as`, `satisfies` or `!`. Dynamic values and
-    CSS custom properties stay allowed. The named colours are shared with
-    the CSS check (`scripts/named-colors.json`).
+    `style` attributes. Each is also caught as a branch of `?:`, `||`, `&&` or `??`, or wrapped
+    in `as`, `satisfies` or `!`, two levels deep. Dynamic values and CSS custom properties stay
+    allowed. The named colours are shared with the CSS check (`scripts/named-colors.json`).
   - In CSS, `scripts/check-raw-colors.ts` bans hex, colour functions and the 148 named colours
     outside `@theme`.
   - SVG files are brand artwork and exempt.
 - **i18n:** `react/jsx-no-literals` with `noStrings` (so `{'text'}` counts too; props ignored),
   plus a ban on literal `alt`, `title`, `placeholder`, `label` and `aria-*` text, on the literal
   `value` of submit, reset and button inputs, and on literal text in JSX children, each also as
-  a branch of `?:`, `||`, `&&` or `??`, or wrapped in `as`, `satisfies` or `!`. A literal passed to a function, such as a message key, is
-  allowed.
+  a branch or wrapped, two levels deep, as for tokens. A literal passed to a function, such as a
+  message key, is allowed.
 - **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs and raw HTML are
-  banned everywhere: `dangerouslySetInnerHTML` and `srcDoc` as a JSX prop, a `createElement` or
-  spread property, or a computed key spelling them; `innerHTML`/`outerHTML` assignment;
-  `insertAdjacentHTML`, `createContextualFragment` and `document.write` (Semgrep catches them too, but only in CI). A
-  JSON-LD script tag will need a `react/no-danger` override with an ADR link.
+  banned everywhere. For raw HTML that means:
+  - `dangerouslySetInnerHTML` and `srcDoc` as a JSX prop, and any object key naming a sink
+    (`createElement` props, spreads, `Object.assign(node, { innerHTML })`);
+  - any string or static template that is exactly a sink's name, outside type positions: string
+    keys, computed members, `Reflect.set`, `setAttribute('srcdoc')`, a name kept in a variable;
+  - assigning `innerHTML`, `outerHTML` or `srcdoc`, also through `as`, `satisfies` or `!`, and an
+    `on…` attribute through `setAttribute`;
+  - `insertAdjacentHTML`, `createContextualFragment`, `parseFromString`, `setHTMLUnsafe`,
+    `parseHTMLUnsafe`, and `write`/`writeln` on `document` or on a `.document` or
+    `.contentDocument`.
+
+  Semgrep catches some of these too, but only in CI. A JSON-LD script tag will need a
+  `react/no-danger` override with an ADR link.
+
 - **Size and types:** `max-lines-per-function: 40`, `max-lines: 300`, no `any`, no `@ts-ignore`.
 
 ## Consequences
@@ -92,11 +102,14 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
       result or an import (`const c = 'red'; style={{ color: c }}`) passes.
     - Shapes not yet listed pass too: branches nested deeper than two levels, and wrappers
       the selectors do not name. TypeScript's `as`, `satisfies` and `!` were added after the
-      round-5 review.
+      round-5 review, and every rule follows them two levels deep since round 6.
+    - `write` on a document held in a variable (`const d = frame.contentDocument; d.write(x)`)
+      is caught only by the type-aware `@typescript-eslint/no-deprecated`, and a sink name
+      built at run time by nothing.
     - The purity rule sees the clock only in the calls it lists: an Intl `format(d)` whose `d`
       is `undefined` at run time also reads the clock.
 
-    Five review rounds kept finding new shapes. Code review remains a control, each new shape
+    Six review rounds kept finding new shapes. Code review remains a control, each new shape
     found becomes a selector with a fixture line, and a type-aware rule replaces the selectors
     if the list keeps growing (see Revisit).
 - **Reversibility:** high. Each rule is a config entry, and removing one is a one-line diff
