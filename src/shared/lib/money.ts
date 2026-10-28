@@ -1,4 +1,4 @@
-import type { Locale } from './locale';
+import { DEFAULT_LOCALE, type Locale } from './locale';
 
 const IRR_PER_TOMAN = 10n;
 const HALF = IRR_PER_TOMAN / 2n;
@@ -19,6 +19,6 @@ const NUMBER_LOCALES: Record<Locale, string> = { fa: 'fa-IR', en: 'en-US' };
  * The unit word ("تومان" / "Toman") comes from the message catalogue, not from here,
  * so every user-facing word stays in next-intl.
  */
-export function formatToman(irr: bigint, locale: Locale = 'fa'): string {
+export function formatToman(irr: bigint, locale: Locale = DEFAULT_LOCALE): string {
   return new Intl.NumberFormat(NUMBER_LOCALES[locale]).format(irrToToman(irr));
 }
