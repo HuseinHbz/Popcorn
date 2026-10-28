@@ -71,9 +71,10 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
   `value` of submit, reset and button inputs, and on literal text in JSX children, each also as
   a branch of `?:`, `||`, `&&` or `??`, or wrapped in `as`, `satisfies` or `!`. A literal passed to a function, such as a message key, is
   allowed.
-- **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs and raw HTML
-  (`dangerouslySetInnerHTML` as a JSX prop, a `createElement` or spread property, and
-  `<iframe srcDoc>`) are banned everywhere (Semgrep catches them too, but only in CI). A
+- **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs and raw HTML are
+  banned everywhere: `dangerouslySetInnerHTML` and `srcDoc` as a JSX prop, a `createElement` or
+  spread property, or a computed key spelling them; `innerHTML`/`outerHTML` assignment;
+  `insertAdjacentHTML`, `createContextualFragment` and `document.write` (Semgrep catches them too, but only in CI). A
   JSON-LD script tag will need a `react/no-danger` override with an ADR link.
 - **Size and types:** `max-lines-per-function: 40`, `max-lines: 300`, no `any`, no `@ts-ignore`.
 
