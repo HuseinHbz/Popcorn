@@ -1,6 +1,7 @@
 # CI-only tool images, pinned by digest and kept current by Dependabot (docker-compose).
-# The repository is mounted read-only. Run from the repo root:
-#   docker compose -f .github/ci-tools/compose.yaml run --rm <tool>
+# The history scan mounts the repository read-only; the tree scan and Semgrep read a tree
+# the CI step exports and mounts (see each service). Run from the repo root:
+#   docker compose -f .github/ci-tools/compose.yaml run --rm [-v …] <tool>
 name: popcorn-ci-tools
 
 services:
@@ -44,11 +45,12 @@ services:
       - --redact
       - --verbose
 
+  # The CI step mounts the exported tree at /src, with the pinned ignore file copied in as
+  # its .semgrepignore, and a writable /report. Without a .semgrepignore, Semgrep skips every
+  # test/, tests/, vendor/, build/ and dist/ directory; the step checks which files it read.
   semgrep:
     image: semgrep/semgrep:1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6
     working_dir: /src
-    volumes:
-      - ../..:/src:ro
     command:
       - semgrep
       - scan
@@ -60,4 +62,4 @@ services:
       - --config=p/react
       - --config=p/nextjs
       - --config=p/secrets
-      - --exclude=tests/fixtures
+      - --json-output=/report/semgrep.json
