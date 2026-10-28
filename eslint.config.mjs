@@ -117,28 +117,34 @@ const PURE_SYNTAX = [
 
 // Raw HTML outside the forms react/no-danger sees: createElement props, spread objects,
 // computed keys, <iframe srcDoc> and the DOM HTML sinks Trusted Types guards (security
-// reviews round 4 G4, round 5 H5; code review round 6). In both no-restricted-syntax lists,
-// because a later list replaces an earlier one.
-/** A sink name written as an identifier, a string key or a static template key. */
-const named = (node, pattern) =>
-  `:matches([${node}.name=${pattern}], [${node}.value=${pattern}], [${node}.quasis.0.value.raw=${pattern}])`;
+// reviews round 4 G4, round 5 H5, round 6 J6; code review round 6). In both
+// no-restricted-syntax lists, because a later list replaces an earlier one.
+const HTML_SINK =
+  'dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML|insertAdjacentHTML|createContextualFragment|parseFromString|setHTMLUnsafe|parseHTMLUnsafe';
 const HTML_PROPERTY = '/^(?:dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML)$/i';
 const HTML_CALL =
   '/^(?:insertAdjacentHTML|createContextualFragment|parseFromString|setHTMLUnsafe|parseHTMLUnsafe)$/';
-const UNSAFE_SYNTAX = [
+const TS_WRAPPER = ':matches(TSAsExpression, TSSatisfiesExpression, TSNonNullExpression)';
+const UNSAFE_SYNTAX = rules('No raw HTML: render React elements instead.', [
+  // A string naming a sink, outside type positions: string keys, computed members
+  // (node['outerHTML']), Reflect.set, setAttribute('srcdoc'), a key kept in a variable.
+  `Literal:not(TSLiteralType > Literal)[value=/^(?:${HTML_SINK})$/i]`,
+  `TemplateLiteral[expressions.length=0] > TemplateElement[value.raw=/^(?:${HTML_SINK})$/i]`,
+  // A computed template key with a sink name in any static part.
+  'Property[computed=true] > TemplateLiteral.key[expressions.length>0] > TemplateElement[value.raw=/dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML/i]',
   // An object key named after a sink: createElement props, spreads, Object.assign(node, {…}).
   // Destructuring (reading) is a pattern, not an object expression, and stays allowed.
-  // A computed template key matches when any of its static parts contains the name.
-  `ObjectExpression > Property:matches([key.name=${HTML_PROPERTY}], [key.value=${HTML_PROPERTY}])`,
-  'Property[computed=true] > TemplateLiteral.key > TemplateElement[value.raw=/dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML/i]',
+  `ObjectExpression > Property[computed=false][key.name=${HTML_PROPERTY}]`,
   "JSXAttribute[name.name='srcDoc']",
-  // Assigning a sink (node.innerHTML, node['outerHTML'], frame.srcdoc) or its attribute.
-  `AssignmentExpression > MemberExpression.left${named('property', HTML_PROPERTY)}`,
-  "CallExpression[callee.property.name='setAttribute'] > Literal.arguments:first-child[value=/^srcdoc$/i]",
-  // Calling an API that parses an HTML string, and document.write / writeln.
-  `CallExpression > MemberExpression.callee${named('property', HTML_CALL)}`,
-  `CallExpression > MemberExpression.callee:matches([object.name='document'], [object.property.name='document'])${named('property', '/^write(?:ln)?$/')}`,
-].map((selector) => ({ selector, message: 'No raw HTML: render React elements instead.' }));
+  // Assigning a sink (node.innerHTML, frame.srcdoc), also through `as`, `satisfies` or `!`.
+  `AssignmentExpression > MemberExpression.left[computed=false][property.name=${HTML_PROPERTY}]`,
+  `AssignmentExpression > ${TS_WRAPPER}.left > MemberExpression[computed=false][property.name=${HTML_PROPERTY}]`,
+  // Calling an API that parses an HTML string; an inline event-handler attribute.
+  `CallExpression > MemberExpression.callee[computed=false][property.name=${HTML_CALL}]`,
+  "CallExpression[callee.property.name='setAttribute'] > Literal.arguments:first-child[value=/^on/i]",
+  // document.write and writeln, on this page's document or another one.
+  "CallExpression > MemberExpression.callee:matches([object.name='document'], [object.property.name=/^(?:document|contentDocument)$/]):matches([property.name=/^write(?:ln)?$/], [property.value=/^write(?:ln)?$/])",
+]);
 
 const SAME_MODULE = { module: '{{ from.element.captured.module }}' };
 
