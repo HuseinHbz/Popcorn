@@ -1,4 +1,4 @@
-import type { Locale } from './locale';
+import { DEFAULT_LOCALE, type Locale } from './locale';
 
 export type JalaliStyle = 'long' | 'short' | 'dateTime';
 
@@ -19,7 +19,7 @@ const STYLES: Record<JalaliStyle, Intl.DateTimeFormatOptions> = {
  */
 export function formatJalali(
   date: Date,
-  locale: Locale = 'fa',
+  locale: Locale = DEFAULT_LOCALE,
   style: JalaliStyle = 'long',
 ): string {
   return new Intl.DateTimeFormat(CALENDAR_LOCALES[locale], {

@@ -18,7 +18,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   const t = await getTranslations('Home');
-  const otherLocale = locale === 'fa' ? 'en' : 'fa';
+  const otherLocale =
+    routing.locales.find((candidate) => candidate !== locale) ?? routing.defaultLocale;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-10 px-6 py-24">
