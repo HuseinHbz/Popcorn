@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: 100/100 (code review round 6, at `a2d5e28`, `docs/scorecards/phase-0/foundation-round-6.md`).
+- Score: 100/100 (code review round 7, at `a3d1e29`, `docs/scorecards/phase-0/foundation-round-7.md`).
 - Related: ADR 0001–0003 (stack), ADR 0015 (rule enforcement), ADR 0016 (supply chain), ADR 0017 (fonts)
 
 ## Context
