@@ -12,14 +12,19 @@ const valid = {
   S3_SECRET_KEY: 'super-secret-key',
 };
 
-// Production values are built at runtime: key-like literals would trip the secret scan.
+/** A stand-in for a generated secret, built at runtime: key-like literals trip the secret scan. */
+const generated = (length: number): string =>
+  Array.from({ length }, (_, index) =>
+    'abcdefghijklmnopqrstuvwxyz0123456789'.charAt(index % 36),
+  ).join('');
+
 const production = {
   ...valid,
   APP_ENV: 'production',
-  DATABASE_URL: `postgres://app:${'p'.repeat(16)}@db:5432/popcorn`,
-  REDIS_URL: `redis://:${'r'.repeat(16)}@cache:6379`,
+  DATABASE_URL: `postgres://app:${generated(16)}@db:5432/popcorn`,
+  REDIS_URL: `redis://:${generated(16)}@cache:6379`,
   S3_ENDPOINT: 'http://objectstore:8333',
-  S3_SECRET_KEY: 'x'.repeat(32),
+  S3_SECRET_KEY: generated(32),
 };
 
 function problemsOf(source: Record<string, string | undefined>): readonly string[] {
@@ -115,6 +120,20 @@ describe('parseEnv', () => {
       'REDIS_URL: password shorter than 16 characters',
       'S3_SECRET_KEY: shorter than 32 characters',
       'S3_ENDPOINT: must use https unless the host is local',
+    ]);
+  });
+
+  it('rejects secrets with few distinct characters, and blank service passwords', () => {
+    const repeated = {
+      DATABASE_URL: `postgres://app:${'p'.repeat(16)}@db/popcorn`,
+      REDIS_URL: `redis://:${'%20'.repeat(16)}@cache:6379`,
+      S3_SECRET_KEY: 'x'.repeat(32),
+    };
+    expect(problemsOf({ ...valid, ...repeated })).toEqual([]);
+    expect(problemsOf({ ...production, ...repeated })).toEqual([
+      'DATABASE_URL: password uses fewer than 8 distinct characters',
+      'REDIS_URL: has no password',
+      'S3_SECRET_KEY: uses fewer than 8 distinct characters',
     ]);
   });
 
