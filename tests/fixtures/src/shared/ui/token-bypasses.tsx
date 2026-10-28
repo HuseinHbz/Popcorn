@@ -18,6 +18,8 @@ export const ConditionalBorder = ({ ok }: Props) => ({ border: ok ? '1px solid r
 export const TemplateFill = () => <path fill={`red`} />; // expect: no-restricted-syntax
 export const Negative = () => <p style={{ marginTop: -8 }} />; // expect: no-restricted-syntax
 export const ConditionalSpacing = ({ ok }: Props) => <p style={{ padding: ok ? 8 : 16 }} />; // expect: no-restricted-syntax, no-restricted-syntax
+export const AsConstColor = { color: 'red' as const }; // expect: no-restricted-syntax
+export const SatisfiesSpacing = () => <p style={{ padding: 8 satisfies number }} />; // expect: no-restricted-syntax
 
 // Dynamic values, custom properties, non-colour keywords and non-style data: no findings.
 export const Dynamic = ({ size }: Props) => <div style={{ width: size, padding: `${String(size)}px`, '--accent-size': size } as CSSProperties} />;

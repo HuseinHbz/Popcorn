@@ -60,7 +60,7 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
     property (`color`, `fill`, `backgroundColor`, quoted keys and template literals included);
     the 148 named colours in colour-bearing values (`border: '1px solid red'`) and SVG colour
     attributes; and literal spacing, radius and font values (negative ones included) in inline
-    `style` attributes; each also as a branch of `?:`, `||`, `&&` or `??`. Dynamic values and
+    `style` attributes; each also as a branch of `?:`, `||`, `&&` or `??`, or wrapped in `as`, `satisfies` or `!`. Dynamic values and
     CSS custom properties stay allowed. The named colours are shared with
     the CSS check (`scripts/named-colors.json`).
   - In CSS, `scripts/check-raw-colors.ts` bans hex, colour functions and the 148 named colours
@@ -69,7 +69,7 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
 - **i18n:** `react/jsx-no-literals` with `noStrings` (so `{'text'}` counts too; props ignored),
   plus a ban on literal `alt`, `title`, `placeholder`, `label` and `aria-*` text, on the literal
   `value` of submit, reset and button inputs, and on literal text in JSX children, each also as
-  a branch of `?:`, `||`, `&&` or `??`. A literal passed to a function, such as a message key, is
+  a branch of `?:`, `||`, `&&` or `??`, or wrapped in `as`, `satisfies` or `!`. A literal passed to a function, such as a message key, is
   allowed.
 - **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs and raw HTML
   (`dangerouslySetInnerHTML` as a JSX prop, a `createElement` or spread property, and

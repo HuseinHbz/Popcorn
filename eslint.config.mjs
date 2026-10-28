@@ -7,8 +7,12 @@ import nextTypescript from 'eslint-config-next/typescript';
 import prettier from 'eslint-config-prettier/flat';
 import tseslint from 'typescript-eslint';
 
-/** A value chosen by `?:`, `||`, `&&` or `??`: each branch is checked like a plain value. */
-const BRANCH = ':matches(ConditionalExpression, LogicalExpression)';
+/**
+ * A value chosen by `?:`, `||`, `&&` or `??`, or wrapped by a TypeScript `as`, `satisfies` or
+ * `!`: each branch, and the wrapped value, is checked like a plain value.
+ */
+const BRANCH =
+  ':matches(ConditionalExpression, LogicalExpression, TSAsExpression, TSSatisfiesExpression, TSNonNullExpression)';
 
 // CLAUDE.md: only design tokens for colour, spacing, radius and font. Bans raw colours
 // (hex, colour functions) anywhere; Tailwind arbitrary values and properties (`w-[13px]`,
