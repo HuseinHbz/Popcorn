@@ -64,7 +64,10 @@ Option C:
   - Without metric adjustment, a font swap can shift layout. The measured CLS was ≤ 0.002.
   - On `/en` the heading's Shippori Mincho is not preloaded, so the heading first renders in the
     fallback and swaps when the face arrives. The round-4 code review measured no LCP cost: the
-    fonts are not on the LCP path.
+    fonts are not on the LCP path. Lighthouse's simulation does count the request toward FCP:
+    about 1,070 ms on `/en` against 780 ms on `/fa` (measured; without Shippori in the stack,
+    `/en` fell to about 770 ms), worth at most 0.1 points (round-5 review). CI medians at
+    `fe5b81c`: 99 on both pages.
 - **Reversibility:** high. Switching to a variable font or another face is a font-module and
   CSS change, and the E2E font test pins the expectation.
 - **Iran fit:** no runtime font request leaves the server, and files are not fetched at build

@@ -87,12 +87,18 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
     config-file override with an ADR link.
   - Banning all arbitrary values means a genuinely new design value must first become a theme
     token. That is intended (CLAUDE.md), but it adds a step.
-  - False negatives: the syntax rules see the shapes they list, not data flow. A value that
-    reaches a style, attribute or JSX child through a variable, a function result or an import
-    (`const c = 'red'; style={{ color: c }}`) passes, and four review rounds kept finding new
-    shapes. Code review remains a control, each new shape found becomes a selector with a
-    fixture line, and a type-aware rule replaces the selectors if the list keeps growing (see
-    Revisit).
+  - False negatives: the syntax rules see the shapes they list, not data flow or types.
+    - A value that reaches a style, attribute or JSX child through a variable, a function
+      result or an import (`const c = 'red'; style={{ color: c }}`) passes.
+    - Shapes not yet listed pass too: branches nested deeper than two levels, and wrappers
+      the selectors do not name. TypeScript's `as`, `satisfies` and `!` were added after the
+      round-5 review.
+    - The purity rule sees the clock only in the calls it lists: an Intl `format(d)` whose `d`
+      is `undefined` at run time also reads the clock.
+
+    Five review rounds kept finding new shapes. Code review remains a control, each new shape
+    found becomes a selector with a fixture line, and a type-aware rule replaces the selectors
+    if the list keeps growing (see Revisit).
 - **Reversibility:** high. Each rule is a config entry, and removing one is a one-line diff
   whose fixture test then fails visibly.
 - **Iran fit:** everything runs offline from the lockfile, with no network service involved.
