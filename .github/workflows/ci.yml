@@ -27,7 +27,8 @@ permissions:
 #   output first, `out=$(cmd)`, then `grep -q … <<<"$out"`.
 # - A writer that exits non-zero on purpose (`pnpm audit --json` on any finding) must be
 #   told the threshold the reader checks.
-# Never negate a command with `!` unless it is the step's last: bash ignores `set -e` for it.
+# Never negate a command with `!` unless it is the step's last, and never join checks with
+# `&&` before the last command: bash ignores `set -e` for both, so a failing check passes.
 defaults:
   run:
     shell: bash
@@ -130,15 +131,22 @@ jobs:
       - run: printf '* !diff\n* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
       - name: Scan full history
         run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
-      # The tree at HEAD is scanned too, with no exceptions (.gitleaksignore entries name a
-      # commit, which a directory scan has none of), so neither an exception nor a rebase
-      # merge's new commit ids can leave a secret-like value in the tree.
+      # The tree at HEAD is scanned too, with no exceptions, so neither an exception nor a
+      # rebase merge's new commit ids can leave a secret-like value in the tree.
       - name: Scan the current tree
         run: |
           tree=$RUNNER_TEMP/tree report=$RUNNER_TEMP/report
           mkdir "$tree" "$report"
           git archive HEAD | tar -x -C "$tree"
           test -s "$tree/package.json"
+          # No exceptions: gitleaks would load the exported .gitleaksignore, where an entry
+          # without a commit applies to a directory scan too. No committed file may sit where
+          # the canary goes, and no symbolic link, which gitleaks does not follow.
+          rm -f "$tree/.gitleaksignore"
+          test ! -e "$tree/.ci-canary"
+          test ! -L "$tree/.ci-canary"
+          links=$(find "$tree" -type l)
+          test -z "$links"
           # gitleaks reports a missing or unreadable directory as clean. A canary made now and
           # never committed must be the only finding: that proves the tree was mounted and
           # read and that the rules match, and any real finding still fails the step.
