@@ -100,9 +100,10 @@ jobs:
           if [ -n "$found" ]; then echo "::error::inline scanner suppression in: $found"; exit 1; fi
           # Only the two security reviews that report on markers may quote one (checked in the
           # tree, so a squash merge keeps it valid); any other scorecard fails.
+          # git grep exits 1 when nothing matches; any other failure (a bad pattern) fails here.
           quoted=$(git grep -l -i -E "$marker" -- docs/scorecards \
             ':!docs/scorecards/phase-0/security-foundation-round-4.md' \
-            ':!docs/scorecards/phase-0/security-foundation-round-5.md' || true)
+            ':!docs/scorecards/phase-0/security-foundation-round-5.md') || [ $? -eq 1 ]
           if [ -n "$quoted" ]; then echo "::error::scanner marker quoted in: $quoted"; exit 1; fi
       # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
       # line in a .gitattributes would hide that path from the whole history scan, and an
