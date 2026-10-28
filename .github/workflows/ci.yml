@@ -105,11 +105,18 @@ jobs:
             ':!docs/scorecards/phase-0/security-foundation-round-4.md' \
             ':!docs/scorecards/phase-0/security-foundation-round-5.md') || [ $? -eq 1 ]
           if [ -n "$quoted" ]; then echo "::error::scanner marker quoted in: $quoted"; exit 1; fi
+          # Git shows a file with NUL bytes (UTF-16 text, say) as "Binary files differ", and
+          # gitleaks cannot read UTF-16, so only files with a binary format's extension may be
+          # binary. Today: the five fonts.
+          binary=$(git ls-files --eol | awk -F'\t' '$1 ~ /^i\/-text/ &&
+            $2 !~ /\.(woff2?|ttf|otf|png|jpe?g|gif|webp|avif|ico)$/ { print $2 }')
+          if [ -n "$binary" ]; then echo "::error::binary content in: $binary"; exit 1; fi
       # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
-      # line in a .gitattributes would hide that path from the whole history scan, and an
-      # `export-ignore` line would drop it from the tree scan below. This file outranks every
-      # .gitattributes; fonts stay binary by content, text cannot be hidden.
-      - run: printf '* !diff\n* !export-ignore\n' > .git/info/attributes
+      # line in a .gitattributes would hide that path from the whole history scan, an
+      # `export-ignore` line would drop it from the tree scan below, and `working-tree-encoding`
+      # would export it as UTF-16, which gitleaks cannot match. This file outranks every
+      # .gitattributes; fonts stay binary by content (and by the check above).
+      - run: printf '* !diff\n* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
       - name: Scan full history
         run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
       # The history scan reads commit diffs only, so a secret that enters through a merge
