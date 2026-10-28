@@ -1,5 +1,7 @@
 # The only gitleaks configuration CI uses: the built-in rules, none removed or relaxed.
-# It is passed with --config, so a .gitleaks.toml in the scanned code is never read; the
-# only exceptions are the fingerprints in .gitleaksignore, each with a written reason.
+# It is passed with --config, so a .gitleaks.toml in the scanned code is never read, and
+# CI passes --ignore-gitleaks-allow, so inline allow comments have no effect. In the history
+# scan, the only exceptions are the commit-bound fingerprints in .gitleaksignore, each with
+# a written reason; the scan of the current tree has none.
 [extend]
 useDefault = true
