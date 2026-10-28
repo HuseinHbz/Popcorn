@@ -57,3 +57,9 @@ Two statements above were not true, as the round-5 reviews showed:
 - G1: "an inline suppression in any commit" excluded `docs/scorecards/`, and gitleaks honoured
   markers there. Fixed in `ff9ea59` and `41fd08f`: neither scanner honours a marker anywhere, and
   only the two security reviews that report on markers may quote one.
+
+## Correction after round 6
+
+The first correction above was itself wrong: after `97f373f` the log check still missed
+telemetry in most runs, because `pipefail` turned the closed pipe into a failed condition. See
+the corrections at the end of `foundation-round-5-response.md`.

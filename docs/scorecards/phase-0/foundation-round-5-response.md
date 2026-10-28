@@ -43,3 +43,19 @@ Also recorded: the Node 22 end-of-life deadline (F7) and the owner's GitHub sett
 While fixing H1, the broader marker pattern matched the `--disable-nosem` flag name in `ff9ea59`
 itself, so the guard would have failed on its own commit. The pattern now requires the marker to
 stand alone (`41fd08f`). The guard passes on the branch, and every negative case above still fails.
+
+## Corrections after round 6
+
+Three statements above were not true, as the round-6 reviews showed:
+
+- T7-r5 row: the step did not "now fail on the log check". Under the `pipefail` that `97f373f`
+  added, `docker compose logs` failed writing into the pipe once `grep -q` had matched and
+  exited, so the `if` took the clean branch: the check missed telemetry in 37 of 40 runs here
+  (84 of 100 for the code reviewer). The single negative control happened to land in the
+  minority. Fixed in `15d1478` (the log is captured first; 0 of 40 missed) and `acf3507`
+  (exactly one telemetry flag, set off).
+- H2 row: "A run without the tree mount fails" was false. gitleaks reports a missing or empty
+  directory as clean. Fixed in `687f69a` (the rules are read from inside the tree, with a CI
+  positive control) and `f2791c5` (a canary that must be the only finding).
+- H5 row: `document.write` had neither a working selector (`/^writeln?$/` never matched
+  `write`) nor a fixture line. Fixed in `444faf9`, with a fixture line for every sink.
