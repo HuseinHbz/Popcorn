@@ -24,11 +24,19 @@ export const insertComputed = (node: HTMLElement, html: string): void => { node[
 export const unsafeSet = (node: Element, html: string): void => { node.setHTMLUnsafe(html); }; // expect: no-restricted-syntax
 export const unsafeParse = (html: string): Document => Document.parseHTMLUnsafe(html); // expect: no-restricted-syntax
 export const parsed = (html: string): Document => new DOMParser().parseFromString(html, 'text/html'); // expect: no-restricted-syntax
+export const handler = (node: HTMLElement, code: string): void => { node.setAttribute('onclick', code); }; // expect: no-restricted-syntax
+export const reflected = (node: HTMLElement, html: string): boolean => Reflect.set(node, 'innerHTML', html); // expect: no-restricted-syntax
+export const sinkKey = 'outerHTML'; // expect: no-restricted-syntax
+export const castLeft = (node: HTMLElement, html: string): void => { (node.innerHTML as string) = html; }; // expect: no-restricted-syntax, @typescript-eslint/no-unnecessary-type-assertion
+export const bangLeft = (node: HTMLElement, html: string): void => { node.innerHTML! = html; }; // expect: no-restricted-syntax, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
+export const frameWrite = (frame: HTMLIFrameElement, html: string): void => { frame.contentDocument?.write(html); }; // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const computedWrite = (html: string): void => { document['write'](html); }; // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
 
 // Not raw HTML: a dynamic computed key, a stream write, reading innerHTML (also by
-// destructuring), another attribute.
+// destructuring), another attribute, a sink name in a type.
 export const dynamicKey = (name: string, value: string) => ({ [`data-${name}`]: value });
 export const writeChunk = (stream: { write: (chunk: string) => void }, chunk: string): void => { stream.write(chunk); };
 export const readInner = (node: HTMLElement): string => node.innerHTML;
 export const readOuter = ({ outerHTML }: HTMLElement): string => outerHTML;
 export const titled = (frame: HTMLIFrameElement, title: string): void => { frame.setAttribute('title', title); };
+export type WithoutInner = Omit<HTMLElement, 'innerHTML'>;
