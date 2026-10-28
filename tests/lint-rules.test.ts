@@ -170,10 +170,10 @@ describe('code rules', () => {
     );
   });
 
-  it('rejects raw HTML through createElement, a spread object or <iframe srcDoc>', () => {
-    // The three lines are marked in the fixture; react/no-danger misses all of them.
+  it('rejects raw HTML through props objects, computed keys, srcDoc and the DOM HTML sinks', () => {
+    // Each line is marked in the fixture, with the allowed look-alikes; react/no-danger misses all.
     const rules = rulesIn('shared/ui/unsafe-code.tsx');
-    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(3);
+    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(9);
   });
 
   it('rejects @ts-ignore', () => {

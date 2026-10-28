@@ -120,13 +120,18 @@ const PURE_SYNTAX = [
   'CallExpression[callee.property.name=/^format(?:ToParts)?$/][arguments.length=0]',
 ].map((selector) => ({ selector, message: PURE_MESSAGE }));
 
-// Raw HTML outside the forms react/no-danger sees: createElement props, spread objects
-// and <iframe srcDoc> (security review round 4, G4). In both no-restricted-syntax lists,
-// because a later list replaces an earlier one.
+// Raw HTML outside the forms react/no-danger sees: createElement props, spread objects,
+// computed keys, <iframe srcDoc> and the DOM HTML sinks (security reviews round 4 G4, round
+// 5 H5). In both no-restricted-syntax lists, because a later list replaces an earlier one.
+const RAW_HTML_PROP = '/^(?:dangerouslySetInnerHTML|srcDoc)$/';
 const UNSAFE_SYNTAX = [
-  "Property[key.name='dangerouslySetInnerHTML']",
-  "Property[key.value='dangerouslySetInnerHTML']",
+  `Property:matches([key.name=${RAW_HTML_PROP}], [key.value=${RAW_HTML_PROP}])`,
+  'Property[computed=true] > TemplateLiteral.key > TemplateElement[value.raw=/dangerouslySetInnerHTML|srcDoc/]',
   "JSXAttribute[name.name='srcDoc']",
+  // DOM HTML sinks: assigning innerHTML/outerHTML, and the APIs that parse an HTML string.
+  'AssignmentExpression > MemberExpression.left:matches([property.name=/^(?:inner|outer)HTML$/], [property.value=/^(?:inner|outer)HTML$/])',
+  'CallExpression[callee.property.name=/^(?:insertAdjacentHTML|createContextualFragment)$/]',
+  "CallExpression[callee.object.name='document'][callee.property.name=/^writeln?$/]",
 ].map((selector) => ({ selector, message: 'No raw HTML: render React elements instead.' }));
 
 const SAME_MODULE = { module: '{{ from.element.captured.module }}' };
