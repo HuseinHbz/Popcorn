@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { lighthouseTable } from '../scripts/lighthouse-summary';
+import { lighthouseNotices, lighthouseTable } from '../scripts/lighthouse-summary';
 
 const run = (url: string, performance: number) => ({
   url,
@@ -22,5 +22,20 @@ describe('lighthouseTable', () => {
   it('averages the two middle runs for an even number of runs', () => {
     const table = lighthouseTable([run('http://x/fa', 0.9), run('http://x/fa', 0.96)]);
     expect(table).toContain('| /fa | 2 | 93 (90–96) |');
+  });
+});
+
+describe('lighthouseNotices', () => {
+  it('writes one notice per page, which the checks API serves as an annotation', () => {
+    const notices = lighthouseNotices([
+      run('http://localhost:3100/fa', 0.95),
+      run('http://localhost:3100/fa', 0.99),
+      run('http://localhost:3100/fa', 0.97),
+      run('http://localhost:3100/en', 0.98),
+    ]);
+    expect(notices.split('\n')).toEqual([
+      '::notice title=Lighthouse /fa (3 runs)::performance 97 (95–99), accessibility 100, best-practices 100, seo 100',
+      '::notice title=Lighthouse /en (1 runs)::performance 98, accessibility 100, best-practices 100, seo 100',
+    ]);
   });
 });
