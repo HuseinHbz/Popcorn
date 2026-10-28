@@ -93,11 +93,22 @@ jobs:
             ':!docs/scorecards' ':!.github/workflows/ci.yml')
           if [ -n "$found" ]; then echo "::error::inline scanner suppression in: $found"; exit 1; fi
       # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
-      # line in a .gitattributes would hide that path from the whole history scan. This file
-      # outranks every .gitattributes; fonts stay binary by content, text cannot be hidden.
-      - run: printf '* !diff\n' > .git/info/attributes
+      # line in a .gitattributes would hide that path from the whole history scan, and an
+      # `export-ignore` line would drop it from the tree scan below. This file outranks every
+      # .gitattributes; fonts stay binary by content, text cannot be hidden.
+      - run: printf '* !diff\n* !export-ignore\n' > .git/info/attributes
       - name: Scan full history
         run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
+      # The history scan reads commit diffs only, so a secret that enters through a merge
+      # commit is never seen there, and a rebase merge re-binds the commit-bound exceptions.
+      # The tree is scanned with no exceptions: .gitleaksignore entries name a commit, which
+      # a directory scan has none of.
+      - name: Scan the current tree
+        run: |
+          mkdir "$RUNNER_TEMP/tree"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/tree"
+          docker compose -f .github/ci-tools/compose.yaml run --rm \
+            -v "$RUNNER_TEMP/tree:/tree:ro" gitleaks-tree
 
   sast:
     name: Static analysis (Semgrep)
