@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: 100/100 (code review round 6, at `cca6266`, `docs/scorecards/phase-0/foundation-round-6.md`).
+- Score: 100/100 (code review round 7, at `32b3887`, `docs/scorecards/phase-0/foundation-round-7.md`).
 - Implements: ADR 0012 (Peyda headlines, Vazirmatn body, Shippori Mincho Latin display)
 
 ## Context
