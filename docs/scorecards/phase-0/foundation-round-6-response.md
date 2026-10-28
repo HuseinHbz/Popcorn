@@ -65,3 +65,16 @@ warning on `97f373f` is in the history (D1/D2); new bodies avoid such lines.
 Notes for the code reviewer, acted on: the production audit (A6, `275b403`), the
 distinct-character rule in `.env.example` (`a8ffbfb`), the S3 port and bucket read from `.env`
 in CI (`7f80522`). The register tracks the scanning blind spots that remain (`f1378d5`).
+
+## Corrections after round 7
+
+Two rows above claimed more than the checks enforced, as the round-7 reviews showed:
+
+- J1 and J5 rows: the binary and skipped-name checks read only HEAD's index, with git's quoted
+  paths. A UTF-16 file, a text `.svg` or a text `.pdf` added and deleted in a later commit, a
+  non-ASCII or quoted name, and UTF-16 text named `.png` all passed. Fixed in `99a0a61`: every
+  blob in the history is checked, names are read unquoted, and binary formats need their
+  signature.
+- T11 and J3 rows: the tree scan still had three exceptions: the exported `.gitleaksignore`, a
+  committed `.ci-canary` that the canary overwrote, and symbolic links, which gitleaks does not
+  follow. Fixed in `bccdaab`.
