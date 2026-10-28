@@ -111,6 +111,17 @@ jobs:
           binary=$(git ls-files --eol | awk -F'\t' '$1 ~ /^i\/-text/ &&
             $2 !~ /\.(woff2?|ttf|otf|png|jpe?g|gif|webp|avif|ico)$/ { print $2 }')
           if [ -n "$binary" ]; then echo "::error::binary content in: $binary"; exit 1; fi
+          # gitleaks never reads a path on its default allowlist (an .svg, a .pdf, a file named
+          # gitleaks.toml, node_modules/, …), so a text file there must be an expected one.
+          text=$(git ls-files --eol | awk -F'\t' '$1 !~ /^i\/-text/ { print $2 }')
+          skipped=$(grep -v -e '^#' -e '^$' .github/ci-tools/gitleaks-skipped-paths.txt |
+            while IFS= read -r pattern; do grep -P -- "$pattern" <<<"$text" || [ $? -eq 1 ] || exit 1; done)
+          while IFS= read -r file; do
+            case $file in
+              '' | .github/ci-tools/gitleaks.toml | pnpm-lock.yaml | src/app/icon.svg) ;;
+              *) echo "::error::gitleaks skips this text file by its name: $file"; exit 1 ;;
+            esac
+          done <<<"$skipped"
       # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
       # line in a .gitattributes would hide that path from the whole history scan, an
       # `export-ignore` line would drop it from the tree scan below, and `working-tree-encoding`
