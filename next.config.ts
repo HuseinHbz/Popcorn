@@ -39,6 +39,9 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Only TypeScript files are routed: a stray page.js would build and be served (security
+  // review round 7, K4). tests/source-extensions.test.ts keeps such files out of src/.
+  pageExtensions: ['tsx', 'ts'],
   // src/app/global-not-found.tsx answers every path no route matches with one localized,
   // server-rendered, uncached 404 (ADR 0018).
   experimental: { globalNotFound: true },
