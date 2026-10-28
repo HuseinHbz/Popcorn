@@ -46,9 +46,9 @@ CI (`.github/workflows/ci.yml`) runs on every push and weekly. It runs `pnpm ver
 - dependency audits (accepted risks only through the risk register);
 - Semgrep and gitleaks on the history and on the exported tree, with what the repository could use
   to weaken them blocked: a pinned configuration, inline markers ignored, `.gitattributes`
-  overridden, scanner config files rejected, binary or name-skipped text files rejected, and a
-  canary that proves the tree scan read the tree (ADR 0016 lists the known gaps); exceptions only
-  in `.gitleaksignore`, each with a reason;
+  overridden, scanner config files rejected, unreadable or name-skipped files rejected anywhere in
+  the history, and a canary that proves the tree scan read the tree (ADR 0016 lists the known
+  gaps); exceptions only in `.gitleaksignore`, for the history scan, each with a reason;
 - Compose service and auth checks, including an S3 round trip and object-store isolation;
 - Node and pnpm freshness, with positive controls that must still fail on known-bad pins
   (ADR 0014, ADR 0016).
