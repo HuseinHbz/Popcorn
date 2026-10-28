@@ -137,7 +137,7 @@ describe('code rules', () => {
 
   it('rejects quoted, templated, named and SVG colours and inline spacing, radius and font', () => {
     // Exact lines, and the dynamic values and keywords that stay allowed, are in the fixture.
-    expect(rulesIn('shared/ui/token-bypasses.tsx')).toHaveLength(22);
+    expect(rulesIn('shared/ui/token-bypasses.tsx')).toHaveLength(28);
   });
 
   it('rejects user-facing text that bypasses next-intl', () => {
@@ -148,7 +148,7 @@ describe('code rules', () => {
 
   it('rejects wrapped, conditional and fallback text in attributes, children and button values', () => {
     // Exact lines, and the allowed cases (message keys, non-text values), are marked in the fixture.
-    expect(rulesIn('shared/ui/literal-text-bypasses.tsx')).toHaveLength(19);
+    expect(rulesIn('shared/ui/literal-text-bypasses.tsx')).toHaveLength(21);
   });
 
   it('ignores inline eslint-disable and still reports the violation it hides', () => {

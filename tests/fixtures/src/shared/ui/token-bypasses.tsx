@@ -20,6 +20,10 @@ export const Negative = () => <p style={{ marginTop: -8 }} />; // expect: no-res
 export const ConditionalSpacing = ({ ok }: Props) => <p style={{ padding: ok ? 8 : 16 }} />; // expect: no-restricted-syntax, no-restricted-syntax
 export const AsConstColor = { color: 'red' as const }; // expect: no-restricted-syntax
 export const SatisfiesSpacing = () => <p style={{ padding: 8 satisfies number }} />; // expect: no-restricted-syntax
+export const NestedColor = ({ ok }: Props) => ({ color: (ok ? 'crimson' : 'gray') as string }); // expect: no-restricted-syntax, no-restricted-syntax
+export const NestedConstColor = { color: ('red' as const) satisfies string }; // expect: no-restricted-syntax
+export const NestedBorder = ({ ok }: Props) => ({ border: (ok ? '1px solid red' : 'none') satisfies string }); // expect: no-restricted-syntax
+export const NestedSpacing = ({ ok }: Props) => <p style={{ padding: (ok ? 8 : 16) as number }} />; // expect: no-restricted-syntax, no-restricted-syntax
 
 // Dynamic values, custom properties, non-colour keywords and non-style data: no findings.
 export const Dynamic = ({ size }: Props) => <div style={{ width: size, padding: `${String(size)}px`, '--accent-size': size } as CSSProperties} />;

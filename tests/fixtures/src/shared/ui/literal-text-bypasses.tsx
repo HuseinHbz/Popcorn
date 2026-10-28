@@ -13,6 +13,7 @@ export const ChildBranch = ({ ok }: Props) => <p>{ok ? 'Yes' : 'No'}</p>; // exp
 export const ChildFallback = ({ name }: Props) => <p>{name ?? 'Guest'}</p>; // expect: no-restricted-syntax
 export const FragmentBranch = ({ ok, name }: Props) => <>{ok ? (name ?? 'Guest') : null}</>; // expect: no-restricted-syntax
 export const ButtonBranch = ({ ok }: Props) => <input type="submit" value={ok ? 'Send' : 'Save'} />; // expect: no-restricted-syntax, no-restricted-syntax
+export const ButtonNested = ({ ok }: Props) => <input type="submit" value={(ok ? 'Send' : 'Save') satisfies string} />; // expect: no-restricted-syntax, no-restricted-syntax
 export const AsConstLabel = () => <button aria-label={'Close' as const} />; // expect: no-restricted-syntax
 export const AsConstChild = () => <p>{'Hello' as const}</p>; // expect: no-restricted-syntax
 
