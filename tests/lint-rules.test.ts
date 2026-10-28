@@ -173,7 +173,7 @@ describe('code rules', () => {
   it('rejects raw HTML through props objects, computed keys, srcDoc and the DOM HTML sinks', () => {
     // Each line is marked in the fixture, with the allowed look-alikes; react/no-danger misses all.
     const rules = rulesIn('shared/ui/unsafe-code.tsx');
-    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(26);
+    expect(rules.filter((rule) => rule === 'no-restricted-syntax')).toHaveLength(40);
   });
 
   it('rejects @ts-ignore', () => {

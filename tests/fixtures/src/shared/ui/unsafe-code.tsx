@@ -31,12 +31,30 @@ export const castLeft = (node: HTMLElement, html: string): void => { (node.inner
 export const bangLeft = (node: HTMLElement, html: string): void => { node.innerHTML! = html; }; // expect: no-restricted-syntax, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unnecessary-type-assertion
 export const frameWrite = (frame: HTMLIFrameElement, html: string): void => { frame.contentDocument?.write(html); }; // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
 export const computedWrite = (html: string): void => { document['write'](html); }; // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const viaCall = (node: HTMLElement, html: string): void => { node.insertAdjacentHTML.call(node, 'beforeend', html); }; // expect: no-restricted-syntax
+export const viaApply = (node: HTMLElement, html: string): void => { Element.prototype.insertAdjacentHTML.apply(node, ['beforeend', html]); }; // expect: no-restricted-syntax
+export const viaBind = (range: Range) => range.createContextualFragment.bind(range); // expect: no-restricted-syntax
+export const destructured = (node: Element): ((html: string) => void) => { const { setHTMLUnsafe } = node; return setHTMLUnsafe; }; // expect: no-restricted-syntax, @typescript-eslint/unbound-method
+export const arrayWrite = (node: HTMLElement, html: string): void => { [node.innerHTML] = [html]; }; // expect: no-restricted-syntax
+export const objectWrite = (node: HTMLElement, html: string): void => { ({ a: node.outerHTML } = { a: html }); }; // expect: no-restricted-syntax
+export const defaultWrite = (node: HTMLElement, html: string): void => { [node.innerHTML = html] = []; }; // expect: no-restricted-syntax
+export const loopWrite = (node: HTMLElement, html: string): void => { for (node.innerHTML of [html]) node.focus(); }; // expect: no-restricted-syntax
+export const templateHandler = (node: HTMLElement, code: string): void => { node.setAttribute(`onclick`, code); }; // expect: no-restricted-syntax
+export const namespacedHandler = (node: HTMLElement, code: string): void => { node.setAttributeNS(null, 'onclick', code); }; // expect: no-restricted-syntax
+export const handlerAttribute = (): Attr => document.createAttribute('onclick'); // expect: no-restricted-syntax
+export const editHtml = (html: string): boolean => document.execCommand('insertHTML', false, html); // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const Inline = ({ code }: { code: string }) => <script>{code}</script>; // expect: no-restricted-syntax
+export const scriptUrl = (code: string): void => { location.href = `javascript:${code}`; }; // expect: no-restricted-syntax
 
 // Not raw HTML: a dynamic computed key, a stream write, reading innerHTML (also by
-// destructuring), another attribute, a sink name in a type.
+// destructuring and by iterating), other attributes and values, a sink name in a type, a
+// template URL.
 export const dynamicKey = (name: string, value: string) => ({ [`data-${name}`]: value });
 export const writeChunk = (stream: { write: (chunk: string) => void }, chunk: string): void => { stream.write(chunk); };
 export const readInner = (node: HTMLElement): string => node.innerHTML;
 export const readOuter = ({ outerHTML }: HTMLElement): string => outerHTML;
 export const titled = (frame: HTMLIFrameElement, title: string): void => { frame.setAttribute('title', title); };
 export type WithoutInner = Omit<HTMLElement, 'innerHTML'>;
+export const online = (node: HTMLElement): void => { node.setAttribute('data-state', 'online'); };
+export const characters = (node: HTMLElement): string[] => { const out: string[] = []; for (const ch of node.innerHTML) out.push(ch); return out; };
+export const pageUrl = (path: string): string => `https://example.com/${path}`;
