@@ -4,10 +4,10 @@ import { expect, test } from '@playwright/test';
 const CASES = [
   { path: '/fa/no-such-page', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
   { path: '/en/no-such-page', lang: 'en', dir: 'ltr', title: 'Page not found' },
-  // Not a locale: rendered in the default locale (Persian).
+  // Outside the locales: rendered in the default locale (Persian).
   { path: '/t/no-such-table', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
   { path: '/api/no-such-endpoint', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
-  // Single segments the locale proxy skips: the global 404 (src/app/global-not-found.tsx).
+  // Single segments the locale proxy skips. Every case here is src/app/global-not-found.tsx.
   { path: '/api', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
   { path: '/robots.txt', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
   { path: '/no-such-image.png', lang: 'fa', dir: 'rtl', title: 'صفحه پیدا نشد' },
@@ -23,6 +23,8 @@ for (const { path, lang, dir, title } of CASES) {
       expect(html).toMatch(new RegExp(`<html lang="${lang}" dir="${dir}"`));
       expect(html).toContain(`<title>${title}</title>`);
       expect(html).toMatch(new RegExp(`<h1[^>]*>${title}</h1>`));
+      // The way home stays in the visitor's language.
+      expect(html).toMatch(new RegExp(`<a [^>]*href="/${lang}"`));
     });
 
     test('is localized, sets lang and dir, answers 404 and is not cached', async ({ page }) => {
@@ -34,6 +36,7 @@ for (const { path, lang, dir, title } of CASES) {
       await expect(html).toHaveAttribute('lang', lang);
       await expect(html).toHaveAttribute('dir', dir);
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(title);
+      await expect(page.getByRole('main').getByRole('link')).toHaveAttribute('href', `/${lang}`);
     });
 
     test('has no axe violations', async ({ page }) => {

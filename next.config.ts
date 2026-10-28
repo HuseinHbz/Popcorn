@@ -39,8 +39,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
-  // src/app/global-not-found.tsx: a localized 404 for single-segment paths outside the
-  // locales, instead of an on-demand page cached for a year (ADR 0018).
+  // src/app/global-not-found.tsx answers every path no route matches with one localized,
+  // server-rendered, uncached 404 (ADR 0018).
   experimental: { globalNotFound: true },
   headers: () => Promise.resolve([{ source: '/:path*', headers: securityHeaders }]),
 };
