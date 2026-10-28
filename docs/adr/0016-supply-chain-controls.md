@@ -56,8 +56,10 @@ Constraints:
   - Escape hatch for an urgent security patch: add the package to `minimumReleaseAgeExclude` in
     `pnpm-workspace.yaml` in the same PR, with a link to the advisory.
 - **Scanning:**
-  - Semgrep (TypeScript, React, Next.js and secrets packs) and gitleaks (full history) run on
-    every push, with the repository mounted read-only.
+  - Semgrep (TypeScript, React, Next.js and secrets packs) and gitleaks run on every push, with
+    the repository mounted read-only. gitleaks scans twice: the full history (commit diffs,
+    where the `.gitleaksignore` exceptions apply) and the current tree with no exceptions, which
+    also covers what a merge commit adds and what a squash or rebase merge re-binds.
   - The scanned code cannot weaken them by any means the security reviews have found:
     - gitleaks runs with a pinned configuration (`.github/ci-tools/gitleaks.toml`, the built-in
       rules only) and ignores inline allow comments (`--ignore-gitleaks-allow`);
