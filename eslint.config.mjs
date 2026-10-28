@@ -121,17 +121,28 @@ const PURE_SYNTAX = [
 ].map((selector) => ({ selector, message: PURE_MESSAGE }));
 
 // Raw HTML outside the forms react/no-danger sees: createElement props, spread objects,
-// computed keys, <iframe srcDoc> and the DOM HTML sinks (security reviews round 4 G4, round
-// 5 H5). In both no-restricted-syntax lists, because a later list replaces an earlier one.
-const RAW_HTML_PROP = '/^(?:dangerouslySetInnerHTML|srcDoc)$/';
+// computed keys, <iframe srcDoc> and the DOM HTML sinks Trusted Types guards (security
+// reviews round 4 G4, round 5 H5; code review round 6). In both no-restricted-syntax lists,
+// because a later list replaces an earlier one.
+/** A sink name written as an identifier, a string key or a static template key. */
+const named = (node, pattern) =>
+  `:matches([${node}.name=${pattern}], [${node}.value=${pattern}], [${node}.quasis.0.value.raw=${pattern}])`;
+const HTML_PROPERTY = '/^(?:dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML)$/i';
+const HTML_CALL =
+  '/^(?:insertAdjacentHTML|createContextualFragment|parseFromString|setHTMLUnsafe|parseHTMLUnsafe)$/';
 const UNSAFE_SYNTAX = [
-  `Property:matches([key.name=${RAW_HTML_PROP}], [key.value=${RAW_HTML_PROP}])`,
-  'Property[computed=true] > TemplateLiteral.key > TemplateElement[value.raw=/dangerouslySetInnerHTML|srcDoc/]',
+  // An object key named after a sink: createElement props, spreads, Object.assign(node, {…}).
+  // Destructuring (reading) is a pattern, not an object expression, and stays allowed.
+  // A computed template key matches when any of its static parts contains the name.
+  `ObjectExpression > Property:matches([key.name=${HTML_PROPERTY}], [key.value=${HTML_PROPERTY}])`,
+  'Property[computed=true] > TemplateLiteral.key > TemplateElement[value.raw=/dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML/i]',
   "JSXAttribute[name.name='srcDoc']",
-  // DOM HTML sinks: assigning innerHTML/outerHTML, and the APIs that parse an HTML string.
-  'AssignmentExpression > MemberExpression.left:matches([property.name=/^(?:inner|outer)HTML$/], [property.value=/^(?:inner|outer)HTML$/])',
-  'CallExpression[callee.property.name=/^(?:insertAdjacentHTML|createContextualFragment)$/]',
-  "CallExpression[callee.object.name='document'][callee.property.name=/^writeln?$/]",
+  // Assigning a sink (node.innerHTML, node['outerHTML'], frame.srcdoc) or its attribute.
+  `AssignmentExpression > MemberExpression.left${named('property', HTML_PROPERTY)}`,
+  "CallExpression[callee.property.name='setAttribute'] > Literal.arguments:first-child[value=/^srcdoc$/i]",
+  // Calling an API that parses an HTML string, and document.write / writeln.
+  `CallExpression > MemberExpression.callee${named('property', HTML_CALL)}`,
+  `CallExpression > MemberExpression.callee:matches([object.name='document'], [object.property.name='document'])${named('property', '/^write(?:ln)?$/')}`,
 ].map((selector) => ({ selector, message: 'No raw HTML: render React elements instead.' }));
 
 const SAME_MODULE = { module: '{{ from.element.captured.module }}' };

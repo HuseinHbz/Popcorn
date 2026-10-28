@@ -14,8 +14,21 @@ export const setInner = (node: HTMLElement, html: string): void => { node.innerH
 export const setOuter = (node: HTMLElement, html: string): void => { node['outerHTML'] = html; }; // expect: no-restricted-syntax
 export const insert = (node: HTMLElement, html: string): void => { node.insertAdjacentHTML('beforeend', html); }; // expect: no-restricted-syntax
 export const fragment = (html: string): DocumentFragment => document.createRange().createContextualFragment(html); // expect: no-restricted-syntax
+export const written = (html: string): void => { document.write(html); }; // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const writtenLine = (html: string): void => { window.document.writeln(html); }; // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const setSrcdoc = (frame: HTMLIFrameElement, html: string): void => { frame.srcdoc = html; }; // expect: no-restricted-syntax
+export const setTemplateMember = (node: HTMLElement, html: string): void => { node[`innerHTML`] = html; }; // expect: no-restricted-syntax
+export const assigned = (node: HTMLElement, html: string): HTMLElement => Object.assign(node, { innerHTML: html }); // expect: no-restricted-syntax
+export const srcdocAttribute = (frame: HTMLIFrameElement, html: string): void => { frame.setAttribute('srcdoc', html); }; // expect: no-restricted-syntax
+export const insertComputed = (node: HTMLElement, html: string): void => { node['insertAdjacentHTML']('beforeend', html); }; // expect: no-restricted-syntax
+export const unsafeSet = (node: Element, html: string): void => { node.setHTMLUnsafe(html); }; // expect: no-restricted-syntax
+export const unsafeParse = (html: string): Document => Document.parseHTMLUnsafe(html); // expect: no-restricted-syntax
+export const parsed = (html: string): Document => new DOMParser().parseFromString(html, 'text/html'); // expect: no-restricted-syntax
 
-// Not raw HTML: a dynamic computed key, a stream write, reading innerHTML.
+// Not raw HTML: a dynamic computed key, a stream write, reading innerHTML (also by
+// destructuring), another attribute.
 export const dynamicKey = (name: string, value: string) => ({ [`data-${name}`]: value });
 export const writeChunk = (stream: { write: (chunk: string) => void }, chunk: string): void => { stream.write(chunk); };
 export const readInner = (node: HTMLElement): string => node.innerHTML;
+export const readOuter = ({ outerHTML }: HTMLElement): string => outerHTML;
+export const titled = (frame: HTMLIFrameElement, title: string): void => { frame.setAttribute('title', title); };
