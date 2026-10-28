@@ -56,32 +56,50 @@ Constraints:
   - Escape hatch for an urgent security patch: add the package to `minimumReleaseAgeExclude` in
     `pnpm-workspace.yaml` in the same PR, with a link to the advisory.
 - **Scanning:**
-  - Semgrep (TypeScript, React, Next.js and secrets packs) and gitleaks run on every push, with
-    the repository mounted read-only. gitleaks scans twice: the full history (commit diffs,
-    where the `.gitleaksignore` exceptions apply) and the current tree with no exceptions, which
-    also covers what a merge commit adds and what a squash or rebase merge re-binds.
-  - The scanned code cannot weaken them by any means the security reviews have found:
+  - Semgrep (TypeScript, React, Next.js and secrets packs) and gitleaks run on every push.
+  - gitleaks scans twice:
+    - the full history, read-only, including merge diffs and type changes (`-m`, and a
+      `--diff-filter` without `t`); the `.gitleaksignore` exceptions apply here;
+    - the tree exported from HEAD, with no exceptions, so neither an exception nor the new
+      commit ids of a squash or rebase merge can leave a secret-like value in the tree. Its
+      rules are read from inside the tree, and a canary token generated at run time must be
+      its only finding, so a missing or empty tree, or rules that match nothing, fail the step.
+  - Semgrep scans the same exported tree with a pinned ignore file
+    (`.github/ci-tools/semgrepignore`, only `tests/fixtures/`) in place of its built-in list,
+    which skipped every `tests/`, `build/`, `dist/` and `vendor/` directory. Its report must
+    list files from `src/` and `tests/`.
+  - What keeps the scanned code from weakening the scans (each checked by a negative control
+    when it was added):
     - gitleaks runs with a pinned configuration (`.github/ci-tools/gitleaks.toml`, the built-in
       rules only) and ignores inline allow comments (`--ignore-gitleaks-allow`);
     - Semgrep ignores inline suppression markers (`--disable-nosem`);
-    - `.git/info/attributes` (`* !diff`) outranks every `.gitattributes`, so no line there can
-      hide a text file from the history scan;
+    - `.git/info/attributes` (`* !diff`, `* !export-ignore`, `* !working-tree-encoding`)
+      outranks every `.gitattributes`, so no line there can hide a file from either scan or
+      export it as UTF-16;
+    - only files with a binary format's extension may be binary: a UTF-16 text file is binary
+      to git, and gitleaks cannot read it;
+    - a text file on gitleaks' built-in path allowlist (an `.svg`, a `.pdf`, a file named
+      `gitleaks.toml`, `node_modules/`, …) fails CI unless it is one of three expected files
+      (the pinned configuration, `pnpm-lock.yaml`, `src/app/icon.svg`). The list is copied from
+      the pinned gitleaks version, and a test fails when the versions differ;
     - CI fails on a `.gitleaks.toml` or `.semgrepignore` at any depth, and on an inline marker in
-      any commit outside the review scorecards; in the scorecards, only the two security
-      reviews that report on markers may quote one. This is defence in depth: neither scanner
-      honours a marker anywhere.
+      any commit outside the review scorecards and `ci.yml` (whose old versions name the
+      markers); in the scorecards, only the two security reviews that report on markers may
+      quote one. This is defence in depth: neither scanner honours a marker anywhere.
 
     The only exceptions are `.gitleaksignore` fingerprints, each with a reason;
     `tests/gitleaksignore.test.ts` fails on an entry that is not a fingerprint or has no reason of
     its own. An entry still lives in the repository it exempts, so a push can exempt its own
     finding: the entry shows in the diff, which the owner reads before merging.
 
-  - `.github/CODEOWNERS` lists these controls: CI, scanner exceptions and attributes,
-    dependency and runtime pins, lint rules and their tests, security headers, the proxy, start-up
-    validation, the local services, the risk register and the scorecards. With one maintainer,
-    who also authors every pull request, GitHub requests no review, so until a second maintainer
-    exists the control is the owner reading the diff of these paths before merging; the ruleset
-    then requires code-owner review (risk register).
+  - `.github/CODEOWNERS` routes every path to the owner (a catch-all) and names the paths that
+    hold a control: CI, scanner exceptions and attributes, dependency and runtime pins, lint
+    rules and the tests and configuration behind every gate, agent and reviewer instructions,
+    security headers, the proxy and the locale header's readers, start-up validation, the local
+    services, the ADRs, the risk register and the scorecards. With one maintainer, who also
+    authors every pull request, GitHub requests no review, so until a second maintainer exists
+    the control is the owner reading the diff before merging; the ruleset then requires
+    code-owner review (risk register).
   - Dependabot covers npm, GitHub Actions and both compose files, after a 3-day cooldown.
 
 ## Consequences
@@ -93,8 +111,14 @@ Constraints:
   - The cooldown means Dependabot proposes a fix 3 days after release. `pnpm audit` still flags
     the vulnerable version immediately, so the gap is in the fix proposal, not in detection.
   - gitleaks matches secrets by regex and entropy, and Semgrep by pattern rules, so both can
-    produce false positives. They are handled with the tool's own allowlist and a written
-    reason, never by disabling the scan.
+    produce false positives. In the history they are handled with a `.gitleaksignore`
+    fingerprint and a written reason, never by disabling the scan. The tree scan has no
+    exceptions, so a value that looks like a secret can never stay in the tree as text: tests
+    build such values at run time.
+  - Known gaps: a file in a format neither scanner reads, a value split or encoded so that no
+    rule matches it, and the three expected files gitleaks skips by name.
+  - The skipped-path list is a copy: a gitleaks image update needs a fresh copy, and the
+    version test fails until it is made.
 - **Reversibility:** high. Every control is one config entry or one CI step.
 - **Iran fit:**
   - Hash and digest pins make a compromised mirror detectable, because the bytes must match.

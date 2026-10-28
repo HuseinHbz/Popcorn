@@ -70,10 +70,11 @@ Option F:
     If it is renamed, `/en/x` silently turns Persian; the E2E `/en` case (`lang`, heading, home
     link) fails in CI when that happens.
   - The 404 has its own locale source, apart from the `[locale]` segment the pages use, so
-    anything rendered inside it must receive the locale explicitly. A link without it defaulted
-    to `/fa` on the English 404 after hydration (code review round 5); the E2E now checks the
-    home link's target in every case. The header only selects between the two locales and must
-    never be read for anything else (security review round 5, H7).
+    anything rendered inside it must receive the locale explicitly. A link without it pointed to
+    `/fa` on the English 404, in the served HTML and after hydration (code review rounds 5 and
+    6); the E2E now checks the home link's target in every case. The header only selects
+    between the two locales and must never be read for anything else (security review round 5,
+    H7).
 - **Reversibility:** high. Restoring a catch-all and removing the flag and the file restores the
   previous behaviour.
 - **Iran fit:** no effect; everything is served by the app.
