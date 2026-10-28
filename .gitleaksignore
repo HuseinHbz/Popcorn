@@ -5,6 +5,6 @@
 # (src/shared/config/env.test.ts). The test now builds the value at runtime.
 35f5cae57af3c56def5cdad76f6da18046541ffe:src/shared/config/env.test.ts:generic-api-key:18
 
-# The round-4 security scorecard quotes that same made-up test value as evidence that the
-# entry above is fake (docs/scorecards/phase-0/security-foundation-round-4.md, line 85).
+# Commit ad60853 of the round-4 security scorecard quoted that same made-up test value as
+# evidence that the entry above is fake (line 85 there); the tree now describes it instead.
 ad608533994a726889a690d2d359808544d05453:docs/scorecards/phase-0/security-foundation-round-4.md:generic-api-key:85
