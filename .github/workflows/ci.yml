@@ -268,8 +268,9 @@ jobs:
           grep -q WRONGPASS <<<"$output"
       - name: Object storage sends no telemetry and is isolated from the other containers
         run: |
+          # Exactly one telemetry flag, and it is off: a later flag would override an earlier one.
           docker compose config --format json \
-            | jq -e '.services.objectstore.command | index("-master.telemetry=false") != null'
+            | jq -e '[.services.objectstore.command[] | select(test("^--?master\\.telemetry"))] == ["-master.telemetry=false"]'
           # With telemetry on, weed logs "Reporting anonymous cluster statistics to …telemetry…".
           # The log is captured first: piped into `grep -q`, compose failed writing to the closed
           # pipe, and the check missed telemetry in most runs (37 of 40, measured).
