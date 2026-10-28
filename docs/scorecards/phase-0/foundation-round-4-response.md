@@ -44,3 +44,16 @@ While verifying G3 locally, the harness first ran the steps inside a subshell on
 where bash ignores `set -e`, so a negative control passed that should have failed. The harness now
 runs each step as Actions does (`bash -eo pipefail <file>`); every service step was re-run that
 way: all pass as committed, and the isolation step fails with telemetry switched on.
+
+## Corrections after round 5
+
+Two statements above were not true, as the round-5 reviews showed:
+
+- T7 and the last paragraph: the runtime telemetry check could not fail. It was a negated
+  pipeline before the step's last command, so bash ignored `set -e` for it. The negative control
+  failed on the configuration check, not on the log check. Fixed in `97f373f`, which also runs
+  every step with `pipefail`. With telemetry on and the configuration check removed, the step
+  now fails on the log check.
+- G1: "an inline suppression in any commit" excluded `docs/scorecards/`, and gitleaks honoured
+  markers there. Fixed in `ff9ea59` and `41fd08f`: neither scanner honours a marker anywhere, and
+  only the two security reviews that report on markers may quote one.
