@@ -106,23 +106,15 @@ jobs:
             ':!docs/scorecards/phase-0/security-foundation-round-4.md' \
             ':!docs/scorecards/phase-0/security-foundation-round-5.md') || [ $? -eq 1 ]
           if [ -n "$quoted" ]; then echo "::error::scanner marker quoted in: $quoted"; exit 1; fi
-          # Git shows a file with NUL bytes (UTF-16 text, say) as "Binary files differ", and
-          # gitleaks cannot read UTF-16, so only files with a binary format's extension may be
-          # binary. Today: the five fonts.
-          binary=$(git ls-files --eol | awk -F'\t' '$1 ~ /^i\/-text/ &&
-            $2 !~ /\.(woff2?|ttf|otf|png|jpe?g|gif|webp|avif|ico)$/ { print $2 }')
-          if [ -n "$binary" ]; then echo "::error::binary content in: $binary"; exit 1; fi
-          # gitleaks never reads a path on its default allowlist (an .svg, a .pdf, a file named
-          # gitleaks.toml, node_modules/, …), so a text file there must be an expected one.
-          text=$(git ls-files --eol | awk -F'\t' '$1 !~ /^i\/-text/ { print $2 }')
-          skipped=$(grep -v -e '^#' -e '^$' .github/ci-tools/gitleaks-skipped-paths.txt |
-            while IFS= read -r pattern; do grep -P -- "$pattern" <<<"$text" || [ $? -eq 1 ] || exit 1; done)
-          while IFS= read -r file; do
-            case $file in
-              '' | .github/ci-tools/gitleaks.toml | pnpm-lock.yaml | src/app/icon.svg) ;;
-              *) echo "::error::gitleaks skips this text file by its name: $file"; exit 1 ;;
-            esac
-          done <<<"$skipped"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # Git shows a binary file to the history scan as "Binary files differ", gitleaks cannot
+      # match UTF-16 text, and it skips some paths by name. Every blob any commit on any ref
+      # added must be text, an expected binary format with its signature, or one of the
+      # expected skipped files, whatever its name's characters.
+      - name: Every file in the history is one the scans can read
+        run: node scripts/check-scan-coverage.ts
       # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
       # line in a .gitattributes would hide that path from the whole history scan, an
       # `export-ignore` line would drop it from the tree scan below, and `working-tree-encoding`
