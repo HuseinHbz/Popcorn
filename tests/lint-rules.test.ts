@@ -19,7 +19,7 @@ const findings = new Map<string, Finding[]>();
 
 beforeAll(async () => {
   const eslint = new ESLint({ cwd: root, ignore: false });
-  const results = await eslint.lintFiles([fixture('**/*.{ts,tsx}')]);
+  const results = await eslint.lintFiles([fixture('**/*.{ts,tsx,js,mjs}')]);
   for (const result of results) {
     const key = result.filePath.slice(result.filePath.indexOf('tests/fixtures/src/') + 19);
     findings.set(
@@ -34,7 +34,7 @@ const rulesIn = (path: string): Array<string | null> =>
 
 /** Fixture paths relative to tests/fixtures/src. */
 const fixtures = readdirSync(`${root}tests/fixtures/src`, { recursive: true, encoding: 'utf8' })
-  .filter((path) => /\.tsx?$/.test(path))
+  .filter((path) => /\.(?:tsx?|m?js)$/.test(path))
   .sort();
 
 /** `line:rule` for every `expect:` marker; `inline-config` stands for an ignored directive. */

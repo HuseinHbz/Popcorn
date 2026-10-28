@@ -148,6 +148,11 @@ const UNSAFE_SYNTAX = rules('No raw HTML: render React elements instead.', [
 
 const SAME_MODULE = { module: '{{ from.element.captured.module }}' };
 
+// Every extension a source file could have: the project rules must not depend on choosing
+// `.ts`. Only `.ts` and `.tsx` may exist under src/ (tests/source-extensions.test.ts); the
+// rest are linted here so a stray file still fails (security review round 7, K4).
+const SOURCE = '{ts,tsx,mts,cts,js,jsx,mjs,cjs}';
+
 /**
  * Module boundaries (ADR 0001, CLAUDE.md "Layout"). Dependencies are resolved to
  * files, so relative and aliased imports are treated alike.
@@ -281,7 +286,7 @@ export default defineConfig([
   },
   {
     // tests/fixtures/src mirrors src/ so tests/lint-rules.test.ts can prove these rules fire.
-    files: ['src/**/*.{ts,tsx}', 'tests/fixtures/src/**/*.{ts,tsx}'],
+    files: [`src/**/*.${SOURCE}`, `tests/fixtures/src/**/*.${SOURCE}`],
     plugins: { boundaries },
     settings: {
       'boundaries/elements': boundaryElements,
@@ -305,10 +310,10 @@ export default defineConfig([
   {
     // Pure code performs no I/O and reads no ambient state.
     files: [
-      'src/modules/*/domain/**/*.{ts,tsx}',
-      'src/shared/lib/**/*.{ts,tsx}',
-      'tests/fixtures/src/modules/*/domain/**/*.{ts,tsx}',
-      'tests/fixtures/src/shared/lib/**/*.{ts,tsx}',
+      `src/modules/*/domain/**/*.${SOURCE}`,
+      `src/shared/lib/**/*.${SOURCE}`,
+      `tests/fixtures/src/modules/*/domain/**/*.${SOURCE}`,
+      `tests/fixtures/src/shared/lib/**/*.${SOURCE}`,
     ],
     ignores: ['**/*.test.ts'],
     rules: {
@@ -338,7 +343,7 @@ export default defineConfig([
     rules: { 'boundaries/dependencies': 'off' },
   },
   {
-    files: ['**/*.{js,mjs,cjs}'],
+    files: ['**/*.{js,jsx,mjs,cjs}'],
     extends: [tseslint.configs.disableTypeChecked],
   },
   prettier,
