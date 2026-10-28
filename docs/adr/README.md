@@ -21,7 +21,8 @@
 | [0017](0017-font-delivery.md)            | Font delivery — vendored static subsets, no metric fallback, Peyda slot | Proposed | 99 (round 4) |
 | [0018](0018-not-found-handling.md)       | Not-found handling — one server-rendered 404 that is never cached       | Proposed | 97 (round 4) |
 
-An ADR below 98 stays `Proposed`; its "Revisit when" lists what is needed to reach 98. Scores are from
-the latest review; ADRs amended since then are re-scored in the next round. An ADR at 98 or more stays
+An ADR below 98 stays `Proposed` until a review scores it at 98 or more; the review lists the points
+it lost. "Revisit when" lists the events that would reopen the decision. Scores are from the latest
+review; ADRs amended since then are re-scored in the next round. An ADR at 98 or more stays
 `Proposed` until the product owner accepts it; ADR 0013 also replaces MinIO, which
 `docs/phases/phase-00.md` still names.
