@@ -1,4 +1,5 @@
 // Code execution and unescaped markup (security reviews round 3 F8, round 4 G4, round 5 H5).
+import Script from 'next/script';
 import { createElement } from 'react';
 
 export const run = (code: string): unknown => eval(code); // expect: no-eval
@@ -45,6 +46,10 @@ export const handlerAttribute = (): Attr => document.createAttribute('onclick');
 export const editHtml = (html: string): boolean => document.execCommand('insertHTML', false, html); // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
 export const Inline = ({ code }: { code: string }) => <script>{code}</script>; // expect: no-restricted-syntax
 export const scriptUrl = (code: string): void => { location.href = `javascript:${code}`; }; // expect: no-restricted-syntax
+export const NextInline = ({ code }: { code: string }) => <Script id="inline">{code}</Script>; // expect: no-restricted-syntax
+export const scriptElement = (code: string): HTMLScriptElement => { const element = document.createElement('script'); element.text = code; return element; }; // expect: no-restricted-syntax
+export const scriptNode = (code: string) => createElement('script', null, code); // expect: no-restricted-syntax
+export const computedExec = (html: string): boolean => document['execCommand']('insertHTML', false, html); // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
 
 // Not raw HTML: a dynamic computed key, a stream write, reading innerHTML (also by
 // destructuring and by iterating), other attributes and values, a sink name in a type, a
@@ -58,3 +63,5 @@ export type WithoutInner = Omit<HTMLElement, 'innerHTML'>;
 export const online = (node: HTMLElement): void => { node.setAttribute('data-state', 'online'); };
 export const characters = (node: HTMLElement): string[] => { const out: string[] = []; for (const ch of node.innerHTML) out.push(ch); return out; };
 export const pageUrl = (path: string): string => `https://example.com/${path}`;
+export const division = (): HTMLDivElement => document.createElement('div');
+export const ExternalScript = () => <Script src="/analytics.js" />;

@@ -10,7 +10,7 @@ const rules = (message, selectors) => selectors.map((selector) => ({ selector, m
 // reviews round 4 G4, round 5 H5, round 6 J6; code review round 6). In both
 // no-restricted-syntax lists, because a later list replaces an earlier one.
 const HTML_SINK =
-  'dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML|insertAdjacentHTML|createContextualFragment|parseFromString|setHTMLUnsafe|parseHTMLUnsafe';
+  'dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML|insertAdjacentHTML|createContextualFragment|parseFromString|setHTMLUnsafe|parseHTMLUnsafe|execCommand';
 const HTML_PROPERTY = '/^(?:dangerouslySetInnerHTML|srcdoc|innerHTML|outerHTML)$/i';
 const HTML_CALL =
   '/^(?:insertAdjacentHTML|createContextualFragment|parseFromString|setHTMLUnsafe|parseHTMLUnsafe|execCommand)$/';
@@ -39,8 +39,11 @@ export const UNSAFE_SYNTAX = rules('No raw HTML: render React elements instead.'
   `ObjectPattern > Property[key.name=${HTML_CALL}]`,
   `CallExpression[callee.property.name=/^(?:setAttribute|createAttribute)$/] > ${HANDLER_NAME}.arguments:first-child`,
   `CallExpression[callee.property.name=/^(?:setAttributeNS|createAttributeNS)$/] > ${HANDLER_NAME}.arguments:nth-child(2)`,
-  // Script and style bodies from an expression: React writes them out as they are.
-  'JSXElement[openingElement.name.name=/^(?:script|style)$/] > JSXExpressionContainer',
+  // Script and style bodies from an expression: React writes them out as they are, and
+  // next/script's <Script> runs its children as an inline script. A script element made in
+  // code (document.createElement, React's createElement) gets its code or src set next.
+  'JSXElement[openingElement.name.name=/^(?:script|style|Script)$/] > JSXExpressionContainer',
+  "CallExpression:matches([callee.name='createElement'], [callee.property.name=/^createElement(?:NS)?$/]) > Literal.arguments[value=/^script$/i]",
   // A javascript: URL built from a template (no-script-url sees only plain strings).
   'TemplateLiteral[expressions.length>0] > TemplateElement:first-child[value.raw=/^\\s*javascript:/i]',
   // document.write and writeln, on this page's document or another one.
