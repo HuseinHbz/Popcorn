@@ -14,7 +14,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
-export type Change = { blob: string; path: string };
+/** A blob a change added at a path, and the regular-file blob git diffs it against. */
+export type Change = { blob: string; path: string; previous?: string };
 
 /** Text files gitleaks skips by name on purpose: its own rules, the lockfile, the site icon. */
 export const EXPECTED_SKIPPED = new Set([
@@ -41,11 +42,12 @@ export const SIGNATURES: Record<string, (content: Buffer) => boolean> = {
   ico: (content) => starts(content, bytes(0x00, 0x00, 0x01, 0x00)),
 };
 
-const HEADER = /^\n*:\d{6} (\d{6}) [0-9a-f]+ ([0-9a-f]+) ([A-Z])\d*$/;
+const HEADER = /^\n*:(\d{6}) (\d{6}) ([0-9a-f]+) ([0-9a-f]+) ([A-Z])\d*$/;
 
 /**
  * Parses `git log --raw -z --no-abbrev --format=` output into the blobs each change added,
- * with their paths. Deletions add nothing, and submodule entries are commits, not blobs.
+ * with their paths, and the previous blob when it was a regular file (git diffs the pair as
+ * binary if either side is). Deletions add nothing; submodule entries are commits, not blobs.
  */
 export function parseRawLog(output: string): Change[] {
   const tokens = output.split('\0');
@@ -53,11 +55,16 @@ export function parseRawLog(output: string): Change[] {
   for (let index = 0; index < tokens.length - 1; index += 1) {
     const header = HEADER.exec(tokens[index] ?? '');
     if (!header) continue;
-    const [, mode, blob = '', status] = header;
+    const [, oldMode = '', mode, oldBlob = '', blob = '', status] = header;
     const path = tokens[index + 1] ?? '';
     index += 1;
     if (status === 'D' || mode === '160000') continue;
-    changes.set(`${blob}\0${path}`, { blob, path });
+    const previous = oldMode.startsWith('10') && /[^0]/.test(oldBlob) ? oldBlob : undefined;
+    changes.set(`${String(previous)}\0${blob}\0${path}`, {
+      blob,
+      path,
+      ...(previous && { previous }),
+    });
   }
   return [...changes.values()];
 }
@@ -87,8 +94,17 @@ export function parsePatterns(text: string): RegExp[] {
     .map((line) => (line.startsWith('(?i)') ? new RegExp(line.slice(4), 'i') : new RegExp(line)));
 }
 
-function problem(change: Change, content: Buffer, skipped: RegExp[]): string | undefined {
+function problem(
+  change: Change,
+  contents: Map<string, Buffer>,
+  skipped: RegExp[],
+): string | undefined {
   const { path } = change;
+  const content = contents.get(change.blob) ?? Buffer.alloc(0);
+  const previous = change.previous ? contents.get(change.previous) : undefined;
+  if (previous && isBinary(previous) && !isBinary(content)) {
+    return `${path}: text after binary content, which git diffs as binary`;
+  }
   if (isBinary(content)) {
     const extension = path.slice(path.lastIndexOf('.') + 1).toLowerCase();
     const signature = SIGNATURES[extension];
@@ -109,9 +125,9 @@ export function problems(
   skipped: RegExp[],
 ): string[] {
   return changes.flatMap((change) => {
-    const content = contents.get(change.blob);
-    if (!content) return [`${change.path}: blob ${change.blob} not read`];
-    const message = problem(change, content, skipped);
+    const unread = [change.blob, change.previous].find((blob) => blob && !contents.has(blob));
+    if (unread) return [`${change.path}: blob ${unread} not read`];
+    const message = problem(change, contents, skipped);
     return message ? [message] : [];
   });
 }
@@ -122,7 +138,9 @@ function main(): void {
   const log = git([
     'log',
     '--all',
-    '-m',
+    // Explicit, so a runner's log.diffMerges cannot turn merge diffs into combined ones.
+    '--diff-merges=separate',
+    '--root',
     '--no-renames',
     '--no-abbrev',
     '--raw',
@@ -130,7 +148,7 @@ function main(): void {
     '-z',
   ]);
   const changes = parseRawLog(log.toString('utf8'));
-  const blobs = [...new Set(changes.map((change) => change.blob))];
+  const blobs = [...new Set(changes.flatMap(({ blob, previous }) => [blob, previous ?? blob]))];
   const contents = parseBatch(git(['cat-file', '--batch'], `${blobs.join('\n')}\n`));
   const skipped = parsePatterns(
     readFileSync('.github/ci-tools/gitleaks-skipped-paths.txt', 'utf8'),

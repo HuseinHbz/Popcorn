@@ -30,6 +30,19 @@ describe('parseRawLog', () => {
       { blob: B, path: 'docs/منو.svg' },
     ]);
   });
+
+  it('keeps the previous blob of a regular file, which git diffs against the new one', () => {
+    const log = [
+      `:100644 100644 ${C} ${A} M\0public/a.webp\0`,
+      `:120000 100644 ${C} ${B} T\0link\0`,
+      `:000000 100644 ${OLD} ${A} A\0new.ts\0`,
+    ].join('');
+    expect(parseRawLog(log)).toEqual([
+      { blob: A, path: 'public/a.webp', previous: C },
+      { blob: B, path: 'link' },
+      { blob: A, path: 'new.ts' },
+    ]);
+  });
 });
 
 describe('parseBatch', () => {
@@ -108,6 +121,19 @@ describe('problems', () => {
     expect(check(A, 'src/x/gitleaks.toml')).toEqual([
       'src/x/gitleaks.toml: a text file that gitleaks skips by its name',
     ]);
+  });
+
+  it('rejects text written over binary content, which git diffs as binary', () => {
+    const webp = Buffer.concat([Buffer.from('RIFF'), Buffer.alloc(4), Buffer.from('WEBP\0')]);
+    const pair = new Map([
+      [A, text],
+      [C, webp],
+    ]);
+    expect(problems([{ blob: A, path: 'public/a.webp', previous: C }], pair, skipped)).toEqual([
+      'public/a.webp: text after binary content, which git diffs as binary',
+    ]);
+    expect(problems([{ blob: C, path: 'public/a.webp', previous: A }], pair, skipped)).toEqual([]);
+    expect(problems([{ blob: A, path: 'src/a.ts', previous: A }], pair, skipped)).toEqual([]);
   });
 
   it('fails when a blob could not be read', () => {
