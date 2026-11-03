@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: 99/100 (code review round 7, at `32b3887`, `docs/scorecards/phase-0/foundation-round-7.md`).
+- Score: 99/100 (code review round 8, at `1898889`, `docs/scorecards/phase-0/foundation-round-8.md`).
 - Proposes an amendment to: ADR 0008 (MinIO in the service list)
 
 ## Context
