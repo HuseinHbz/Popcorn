@@ -4,7 +4,7 @@
       "startServerCommand": "pnpm start --port 3100",
       "startServerReadyPattern": "Ready",
       "url": ["http://127.0.0.1:3100/fa", "http://127.0.0.1:3100/en"],
-      "numberOfRuns": 5,
+      "numberOfRuns": 7,
       "settings": { "chromeFlags": "--no-sandbox --headless=new" }
     },
     "assert": {
