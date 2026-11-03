@@ -86,13 +86,23 @@ export function parseBatch(output: Buffer): Map<string, Buffer> {
 
 export const isBinary = (content: Buffer): boolean => content.subarray(0, 8000).includes(0);
 
-/** Reads gitleaks' path patterns (Go syntax, a leading `(?i)` for case-insensitive). */
+/**
+ * Reads gitleaks' path patterns (Go syntax, a leading `(?i)` for case-insensitive). `u` folds
+ * case as Go does (ſ matches s, K matches k) and `s` lets `.` cross every line terminator, as
+ * Go's crosses all but LF; for an LF in a name this over-matches, which fails closed.
+ */
 export function parsePatterns(text: string): RegExp[] {
   return text
     .split('\n')
     .filter((line) => line !== '' && !line.startsWith('#'))
-    .map((line) => (line.startsWith('(?i)') ? new RegExp(line.slice(4), 'i') : new RegExp(line)));
+    .map((line) =>
+      line.startsWith('(?i)') ? new RegExp(line.slice(4), 'isu') : new RegExp(line, 'su'),
+    );
 }
+
+/** Escapes a message for a workflow command, so a file name cannot end it or start another. */
+export const workflowMessage = (message: string): string =>
+  message.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
 
 function problem(
   change: Change,
@@ -107,7 +117,8 @@ function problem(
   }
   if (isBinary(content)) {
     const extension = path.slice(path.lastIndexOf('.') + 1).toLowerCase();
-    const signature = SIGNATURES[extension];
+    // Own keys only: `constructor` and the other Object.prototype names are not formats.
+    const signature = Object.hasOwn(SIGNATURES, extension) ? SIGNATURES[extension] : undefined;
     if (!signature) return `${path}: binary content in a file that is not an expected format`;
     if (!signature(content)) return `${path}: not a ${extension} file (no ${extension} signature)`;
     return undefined;
@@ -155,7 +166,7 @@ function main(): void {
   );
   const found = problems(changes, contents, skipped);
   console.log(`Checked ${String(changes.length)} paths of ${String(blobs.length)} blobs.`);
-  for (const message of found) console.error(`::error::${message}`);
+  for (const message of found) console.error(`::error::${workflowMessage(message)}`);
   if (found.length > 0) process.exit(1);
 }
 

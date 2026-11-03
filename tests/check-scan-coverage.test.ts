@@ -7,6 +7,7 @@ import {
   parseRawLog,
   problems,
   SIGNATURES,
+  workflowMessage,
 } from '../scripts/check-scan-coverage';
 
 const OLD = '0'.repeat(40);
@@ -87,7 +88,16 @@ describe('isBinary and SIGNATURES', () => {
 describe('parsePatterns', () => {
   it('reads Go patterns, with (?i) as a flag, and skips comments', () => {
     const patterns = parsePatterns('# a comment\n\ngitleaks\\.toml\n(?i)\\.svg$\n');
-    expect(patterns.map(String)).toEqual(['/gitleaks\\.toml/', '/\\.svg$/i']);
+    expect(patterns.map(String)).toEqual(['/gitleaks\\.toml/su', '/\\.svg$/isu']);
+  });
+
+  it('matches as Go does: Unicode case folding, and . across every line terminator', () => {
+    const [svg, socket, modules] = parsePatterns(
+      '(?i)\\.svg$\n(?i)\\.socket$\n(?:^|/)node_modules(?:/.*)?$\n',
+    );
+    expect(svg?.test('public/menu.\u017fvg')).toBe(true);
+    expect(socket?.test('docs/server.soc\u212aet')).toBe(true);
+    expect(modules?.test('node_modules/a\rb/index.ts')).toBe(true);
   });
 });
 
@@ -115,6 +125,12 @@ describe('problems', () => {
       'notes.txt: binary content in a file that is not an expected format',
     ]);
     expect(check(B, 'menu.PNG')).toEqual(['menu.PNG: not a png file (no png signature)']);
+    expect(check(B, 'notes.constructor')).toEqual([
+      'notes.constructor: binary content in a file that is not an expected format',
+    ]);
+    expect(check(A, 'src/app/logo.\u017fvg')).toEqual([
+      'src/app/logo.\u017fvg: a text file that gitleaks skips by its name',
+    ]);
     expect(check(A, 'public/منو.svg')).toEqual([
       'public/منو.svg: a text file that gitleaks skips by its name',
     ]);
@@ -140,5 +156,11 @@ describe('problems', () => {
     expect(problems([{ blob: OLD, path: 'x.ts' }], contents, skipped)).toEqual([
       `x.ts: blob ${OLD} not read`,
     ]);
+  });
+});
+
+describe('workflowMessage', () => {
+  it('escapes what would end the message or start another workflow command', () => {
+    expect(workflowMessage('a%b\rc\nd')).toBe('a%25b%0Dc%0Ad');
   });
 });
