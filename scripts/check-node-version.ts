@@ -23,14 +23,18 @@ function isNewer(a: [number, number, number], b: [number, number, number]): bool
   return a[1] > b[1] || (a[1] === b[1] && a[2] > b[2]);
 }
 
-/** Validates nodejs.org's `index.json`: a changed or empty answer fails instead of passing. */
+/**
+ * Validates nodejs.org's `index.json`: a changed or empty answer fails instead of passing.
+ * Prereleases (`v27.0.0-alpha.0`) are valid entries but never a release of a pinned line, so
+ * they are left out; an answer with no stable release at all fails.
+ */
 export function parseReleases(data: unknown): NodeRelease[] {
   if (!Array.isArray(data) || data.length === 0) {
     throw new Error('nodejs.org index.json: expected a non-empty array');
   }
-  return data.map((entry: unknown, index) => {
+  const releases = data.map((entry: unknown, index) => {
     const { version, security } = (entry ?? {}) as Record<string, unknown>;
-    if (typeof version !== 'string' || !/^v\d+\.\d+\.\d+$/.test(version)) {
+    if (typeof version !== 'string' || !/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
       throw new Error(`nodejs.org index.json: entry ${String(index)} has no valid version`);
     }
     if (typeof security !== 'boolean') {
@@ -38,6 +42,9 @@ export function parseReleases(data: unknown): NodeRelease[] {
     }
     return { version, security };
   });
+  const stable = releases.filter(({ version }) => !version.includes('-'));
+  if (stable.length === 0) throw new Error('nodejs.org index.json: no stable release listed');
+  return stable;
 }
 
 /** Security releases in the same major line as `pinned` that are newer than it. */

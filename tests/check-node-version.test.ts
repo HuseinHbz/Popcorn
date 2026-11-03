@@ -40,8 +40,18 @@ describe('parseReleases', () => {
     ]);
   });
 
+  it('accepts and leaves out prereleases, which nodejs.org lists first', () => {
+    const data = [
+      { version: 'v27.0.0-alpha.0.0.0', security: false },
+      { version: 'v22.23.4', security: true },
+    ];
+    expect(parseReleases(data)).toEqual([{ version: 'v22.23.4', security: true }]);
+  });
+
   it.each([
     ['an empty list', []],
+    ['only prereleases', [{ version: 'v27.0.0-rc.1', security: false }]],
+    ['a malformed prerelease', [{ version: 'v27.0.0-', security: false }]],
     ['an object', { releases: [] }],
     ['a release without a security flag', [{ version: 'v22.23.4' }]],
     ['a malformed version', [{ version: '22.23', security: true }]],
