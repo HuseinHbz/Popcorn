@@ -40,11 +40,15 @@ Constraints:
 Option F. Every rule below has a fixture in `tests/fixtures/src`, and `tests/lint-rules.test.ts`
 asserts it fires.
 
-- **File types:** the project rules apply to every JavaScript and TypeScript extension under
-  `src/` (`ts`, `tsx`, `mts`, `cts`, `js`, `jsx`, `mjs`, `cjs`), proven by `.js` and `.mjs`
-  fixtures. Only `.ts` and `.tsx` may exist there (`tests/source-extensions.test.ts`), and
-  Next.js routes only those (`pageExtensions`), so a stray `page.js` is neither linted past nor
-  served.
+- **File types:** the project rules are configured for every JavaScript and TypeScript
+  extension under `src/` (`ts`, `tsx`, `mts`, `cts`, `js`, `jsx`, `mjs`, `cjs`), proven by `.js`
+  and `.mjs` fixtures. A `.cts` file fails to parse (it is in no TypeScript project), and a
+  `.cjs` file anywhere stops ESLint before any rule runs (this configuration sets React rules for
+  every file, and eslint-config-next registers the React plugin for every extension but `.cjs`:
+  "could not find plugin react", exit 2), so both fail lint outright; adding a CommonJS config
+  file later means scoping the React rules first. Only `.ts` and `.tsx` may exist under `src/`
+  (`tests/source-extensions.test.ts`), and Next.js routes only those (`pageExtensions`), so a
+  stray `page.js` is neither linted past nor served.
 
 - **No inline disables:**
   - `linterOptions.noInlineConfig` ignores and reports inline `eslint-disable`.
@@ -93,7 +97,13 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
     `setHTMLUnsafe`, `parseHTMLUnsafe` or `execCommand` (called, through `.call`, `.apply` or
     `.bind`, or destructured), and `write`/`writeln` on `document` or on a `.document` or
     `.contentDocument`;
-  - a JSX `<script>` or `<style>` child expression, which React writes out as it is.
+  - a JSX `<script>` or `<style>` child expression, which React writes out as it is, and a
+    `<Script>` child from `next/script`, which Next.js runs as an inline script;
+  - a script element made in code (`document.createElement('script')`, React's
+    `createElement('script', …)`), whose text or `src` is set next.
+
+  The selectors live in `eslint/unsafe-syntax.mjs`, so the list can grow without crowding the
+  configuration.
 
   Semgrep catches some of these too, but only in CI. A JSON-LD script tag will need a
   `react/no-danger` override with an ADR link.
