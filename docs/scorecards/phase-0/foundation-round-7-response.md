@@ -45,3 +45,19 @@ Notes for the code reviewer: the `&&` warning is in the workflow comment (`8b7f8
 source `.env` as shell, which suits the placeholder values it holds; a value with shell syntax in
 it would need quoting there, and Phase 2 moves secrets out of `.env` (register). The `/fa` run at
 80 is one of five; the gate reads the median, and `numberOfRuns` rises if it starts to flake.
+
+## Corrections after round 8
+
+Three statements above were not true, as the round-8 reviews showed:
+
+- K1 row: "619 paths of 618 blobs" is the count at `7c86861`'s parent, not at the commit. The
+  check also judged each change alone, so text written over a real `.webp`, `.avif` or `.ico`
+  passed, though git diffs that pair as binary. Fixed in `9ac9fb1`.
+- K2 row: not every binary file needed its format's signature: the extension `constructor`
+  found `Object`'s inherited constructor and accepted anything, and names that Go folds by
+  Unicode case (a long s for `s`, the Kelvin sign for `k`) escaped the name check. Fixed in
+  `f4b0723`.
+- T13 and K3 rows: with its side doors closed, the tree scan still ran in directory mode, which
+  skips files with archive-like names, text sniffed as an application format, everything under
+  a directory with a skipped name, and matches across its chunk boundaries. Fixed in `b94f620`
+  (git mode on a one-commit repository).

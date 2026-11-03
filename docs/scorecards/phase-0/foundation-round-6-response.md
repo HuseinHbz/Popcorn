@@ -78,3 +78,10 @@ Two rows above claimed more than the checks enforced, as the round-7 reviews sho
 - T11 and J3 rows: the tree scan still had three exceptions: the exported `.gitleaksignore`, a
   committed `.ci-canary` that the canary overwrote, and symbolic links, which gitleaks does not
   follow. Fixed in `8b7f8ed`.
+
+## Corrections after round 8
+
+The first correction above says `7c86861` made binary formats need their signature and
+checks every blob. Two gaps remained: the extension `constructor` passed any binary content,
+and text written over binary content at the same path was not checked. See the corrections at
+the end of `foundation-round-7-response.md`.
