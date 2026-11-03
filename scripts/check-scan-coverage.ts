@@ -5,10 +5,13 @@
  *   an expected binary format, and must start with that format's signature. Git shows other
  *   binary files to the history scan as "Binary files differ", and gitleaks cannot match
  *   UTF-16 text, so a text file disguised this way would never be scanned;
+ * - text written over binary content at the same path fails too: git diffs the pair as
+ *   binary, so the history scan never reads the text;
  * - a text file on gitleaks' default path allowlist (.github/ci-tools/gitleaks-skipped-paths.txt)
  *   must be one of the expected ones.
  * Paths are read with `-z`, so names git would quote (non-ASCII, quotes) are checked as they
- * are. Security reviews round 6 (J1, J5) and round 7 (K1, K2).
+ * are, and matched as gitleaks' Go patterns match them (Unicode case folding).
+ * Security reviews round 6 (J1, J5), round 7 (K1, K2) and round 8 (P1, P3).
  * Usage: node scripts/check-scan-coverage.ts
  */
 import { execFileSync } from 'node:child_process';
