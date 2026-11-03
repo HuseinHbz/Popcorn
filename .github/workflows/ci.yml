@@ -130,22 +130,30 @@ jobs:
           tree=$RUNNER_TEMP/tree report=$RUNNER_TEMP/report
           mkdir "$tree" "$report"
           git archive HEAD | tar -x -C "$tree"
-          test -s "$tree/package.json"
+          test -s "$tree/package.json" || { echo '::error::the exported tree is empty'; exit 1; }
           # No exceptions: gitleaks would load the exported .gitleaksignore, where an entry
-          # without a commit applies to a directory scan too. No committed file may sit where
-          # the canary goes, and no symbolic link, which gitleaks does not follow.
+          # without a commit applies to a tree scan too. No committed file may sit where the
+          # canary goes, and no symbolic link, which gitleaks does not follow.
           rm -f "$tree/.gitleaksignore"
-          test ! -e "$tree/.ci-canary"
-          test ! -L "$tree/.ci-canary"
+          if [ -e "$tree/.ci-canary" ]; then echo '::error::.ci-canary is committed'; exit 1; fi
           links=$(find "$tree" -type l)
-          test -z "$links"
+          if [ -n "$links" ]; then echo "::error::symbolic links in the tree: $links"; exit 1; fi
           # gitleaks reports a missing or unreadable directory as clean. A canary made now and
           # never committed must be the only finding: that proves the tree was mounted and
           # read and that the rules match, and any real finding still fails the step.
           printf 'token = "ghp_%s"\n' "$(openssl rand -hex 18)" > "$tree/.ci-canary"
+          # Scanned as a one-commit repository, not as a directory: directory mode skips files
+          # with archive-like names (`menu.brand.ts`), text sniffed as an application format
+          # (`%PDF`, `SQLite`), everything under a directory with a skipped name, and matches
+          # across its chunk boundaries; git mode reads every text file whole. The attributes
+          # keep an exported .gitattributes from hiding or re-encoding a file.
+          git -C "$tree" init -q
+          printf '* !diff\n* !working-tree-encoding\n* !filter\n* !text\n' > "$tree/.git/info/attributes"
+          git -C "$tree" add -A --force
+          git -C "$tree" -c user.name=ci -c user.email=ci@example.invalid commit -qm tree
           docker compose -f .github/ci-tools/compose.yaml run --rm \
             -v "$tree:/tree:ro" -v "$report:/report" gitleaks-tree && exit 1
-          jq -e 'length > 0 and all(.[]; .File == "/tree/.ci-canary")' "$report/tree.json"
+          jq -e 'length > 0 and all(.[]; .File == ".ci-canary")' "$report/tree.json"
       # Positive control: gitleaks reports a missing or empty directory as clean, so the tree
       # scan reads its rules from inside the tree and must fail when no tree is there.
       - name: The tree scan fails without a tree
