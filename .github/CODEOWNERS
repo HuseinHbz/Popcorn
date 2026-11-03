@@ -22,6 +22,7 @@
 
 # Rule enforcement, the gates, and the tests that prove them
 /eslint.config.mjs              @HuseinHbz
+/eslint/                        @HuseinHbz
 /tsconfig.json                  @HuseinHbz
 /commitlint.config.mjs          @HuseinHbz
 /.husky/                        @HuseinHbz
