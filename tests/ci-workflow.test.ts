@@ -18,6 +18,34 @@ describe('.github/workflows/ci.yml', () => {
     expect(workflow).toContain('pnpm exec commitlint --from origin/main --to HEAD');
     expect(workflow).toContain('pnpm exec commitlint --from "${BEFORE}" --to HEAD');
   });
+
+  // Security review round 9, Q2: `git archive` and `git add` apply these attributes, and each
+  // can hide or rewrite a file's bytes in the tree the scans read.
+  it('unsets every attribute that changes the scanned bytes, on both sides of the export', () => {
+    const overrides = [
+      ...workflow.matchAll(/printf '([^']*)' > ("\$tree\/)?\.git\/info\/attributes/g),
+    ].map(([, lines = '']) => lines.split('\\n').filter(Boolean));
+    const exported = ['export-ignore', 'export-subst', 'ident', 'filter', 'text', 'eol', 'crlf'];
+    const checkedIn = ['filter', 'text', 'eol', 'crlf', 'ident'];
+    // The history scan's checkout, the scan repository, then Semgrep's export.
+    const required = [
+      ['diff', ...exported, 'working-tree-encoding'],
+      ['diff', ...checkedIn, 'working-tree-encoding'],
+      [...exported, 'working-tree-encoding'],
+    ];
+    expect(overrides).toHaveLength(required.length);
+    required.forEach((attributes, index) => {
+      expect(overrides[index]).toEqual(expect.arrayContaining(attributes.map((a) => `* !${a}`)));
+    });
+  });
+
+  it("fails the tree scan unless the scanned blobs are exactly HEAD's", () => {
+    expect(workflow).toContain("committed=$(git ls-tree -r HEAD | grep -v $'\\t.gitleaksignore$')");
+    expect(workflow).toContain(
+      'scanned=$(git -C "$tree" ls-tree -r HEAD | grep -v $\'\\t.ci-canary$\')',
+    );
+    expect(workflow).toContain('if [ "$committed" != "$scanned" ]; then');
+  });
 });
 
 describe('.github/ci-tools', () => {
