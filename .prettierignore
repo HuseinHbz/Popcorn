@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+.next/
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+next-env.d.ts
+# Deliberately rule-breaking lint fixtures; their exact shape is what tests/lint-rules.test.ts checks.
+tests/fixtures/

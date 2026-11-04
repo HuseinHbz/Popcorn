@@ -1,0 +1,92 @@
+# Local development services (ADR 0008). Production compose arrives in Phase 5.
+# Ports bind to 127.0.0.1 only. Credentials come from .env (see .env.example).
+# Images are pinned by digest; Dependabot proposes updates (.github/dependabot.yml).
+name: popcorn
+
+services:
+  postgres:
+    image: postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-popcorn}
+      POSTGRES_USER: ${POSTGRES_USER:-popcorn}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      # Least-privilege role the app connects with (created by docker/postgres/init).
+      APP_DB_USER: ${APP_DB_USER:-popcorn_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?set APP_DB_PASSWORD in .env}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4.12-alpine@sha256:338fbfc036dc5517ac0b04d6de21521085935336e565f223406180e9d84166e2
+    restart: unless-stopped
+    # The password reaches redis-server through a config file written at start-up,
+    # so it never appears in the process arguments (`ps`, `docker inspect` Cmd).
+    # The image entrypoint still runs last, so redis-server drops to the redis user.
+    command:
+      - sh
+      - -c
+      - >-
+        umask 077 && printf 'requirepass %s\nappendonly yes\n' "$$REDISCLI_AUTH" > /tmp/redis.conf
+        && chown redis:redis /tmp/redis.conf
+        && exec docker-entrypoint.sh redis-server /tmp/redis.conf
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli ping | grep PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    environment:
+      # Read by the start-up command above and by redis-cli (healthcheck) — never argv.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}
+
+  # S3-compatible object storage for menu images and résumés (ADR 0013).
+  objectstore:
+    image: chrislusf/seaweedfs:4.51@sha256:f7a49e3f3972ebed5be2ed4befa4a0c68eb7bdddba6e692d42729ceb545134b8
+    restart: unless-stopped
+    # Only S3 is needed: no telemetry abroad (ADR 0008) and no extra unauthenticated
+    # services (WebDAV, Iceberg and Lance catalogs, admin UI) on the compose network.
+    command:
+      - mini
+      - -dir=/data
+      - -bucket=${S3_BUCKET:-popcorn-media}
+      - -master.telemetry=false
+      - -webdav=false
+      - -s3.port.iceberg=0
+      - -s3.port.lance=0
+      - -admin.ui=false
+      - -admin.port.legacy=0
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY in .env}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY in .env}
+    ports:
+      - '127.0.0.1:${S3_PORT:-8333}:8333'
+    # Its own network: weed mini's filer, master and IAM APIs are unauthenticated, so no
+    # other container may reach them. The app uses the published S3 port only.
+    networks: [objectstore]
+    volumes:
+      - objectstore-data:/data
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8333/healthz']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+networks:
+  objectstore: {}
+
+volumes:
+  postgres-data:
+  redis-data:
+  objectstore-data:

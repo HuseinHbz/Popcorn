@@ -1,0 +1,357 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+  # Weekly, so new advisories and Node security releases surface between pushes.
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+# Each push's commits are linted only by its own run, so on main every commit gets its own
+# group: GitHub would otherwise replace a queued run with a newer one, and the replaced
+# push would never be linted. Branches share a group per ref and cancel superseded runs.
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+# `shell: bash` makes Actions run every step as `bash --noprofile --norc -eo pipefail`; the
+# default is `bash -e`, without pipefail, so a failing command before a pipe would pass.
+# Under pipefail every command in a pipe counts:
+# - Never pipe into a reader that can stop early (`grep -q`, `head`): the writer then fails
+#   on the closed pipe, and the pipeline fails although the reader matched. Capture the
+#   output first, `out=$(cmd)`, then `grep -q … <<<"$out"`.
+# - A writer that exits non-zero on purpose (`pnpm audit --json` on any finding) must be
+#   told the threshold the reader checks.
+# Never negate a command with `!` unless it is the step's last, and never join checks with
+# `&&` before the last command: bash ignores `set -e` for both, so a failing check passes.
+defaults:
+  run:
+    shell: bash
+
+# Third-party actions are pinned to full commit SHAs (tag in the trailing comment);
+# Dependabot keeps them current (.github/dependabot.yml).
+
+jobs:
+  quality:
+    name: Commit messages · dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # pnpm comes from Corepack, which checks it against the sha512 in package.json's
+      # packageManager (pnpm/action-setup drops that hash). Setup-node runs again to cache the store.
+      - run: corepack enable pnpm && pnpm --version
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Commit messages (Conventional Commits)
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Every commit the push adds: the branch's commits since main, or on main the
+          # pushed range (a brand-new ref has an all-zero "before").
+          if [ "${GITHUB_REF_NAME}" != "main" ]; then
+            pnpm exec commitlint --from origin/main --to HEAD --verbose
+          elif [ -n "${BEFORE}" ] && [ "${BEFORE}" != "0000000000000000000000000000000000000000" ]; then
+            pnpm exec commitlint --from "${BEFORE}" --to HEAD --verbose
+          else
+            pnpm exec commitlint --last --verbose
+          fi
+      - name: Dependency audit (accepted risks in docs/security/risk-register.md)
+        run: pnpm audit --audit-level=high
+      - name: Production dependency audit (no accepted risks apply)
+        run: pnpm audit --prod --audit-level=high --json | jq -e '.metadata.vulnerabilities | (.high + .critical) == 0'
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: No scanner can be switched off from inside the repository
+        run: |
+          # Exceptions live only in .gitleaksignore: fingerprints, each with a reason (ADR 0016).
+          # The scanners ignore inline markers anyway (--ignore-gitleaks-allow, --disable-nosem);
+          # these checks keep config files and markers out of the repository as well.
+          files=$(git ls-files -- '*.gitleaks.toml' '*.semgrepignore')
+          if [ -n "$files" ]; then echo "::error::scanner config in the repository: $files"; exit 1; fi
+          # A marker on its own: not part of a flag name such as --disable-no…sem. This step
+          # names the markers, and scorecards quote them when they report on one.
+          marker='gitleaks:al''low|(^|[^a-z-])no''sem'
+          found=$(git log --all -i -E -G"$marker" --format='%h %s' -- . \
+            ':!docs/scorecards' ':!.github/workflows/ci.yml')
+          if [ -n "$found" ]; then echo "::error::inline scanner suppression in: $found"; exit 1; fi
+          # Only the two security reviews that report on markers may quote one (checked in the
+          # tree, so a squash merge keeps it valid); any other scorecard fails.
+          # git grep exits 1 when nothing matches; any other failure (a bad pattern) fails here.
+          quoted=$(git grep -l -i -E "$marker" -- docs/scorecards \
+            ':!docs/scorecards/phase-0/security-foundation-round-4.md' \
+            ':!docs/scorecards/phase-0/security-foundation-round-5.md') || [ $? -eq 1 ]
+          if [ -n "$quoted" ]; then echo "::error::scanner marker quoted in: $quoted"; exit 1; fi
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # Git shows a binary file to the history scan as "Binary files differ", gitleaks cannot
+      # match UTF-16 text, and it skips some paths by name. Every blob any commit on any ref
+      # added must be text, an expected binary format with its signature, or one of the
+      # expected skipped files, whatever its name's characters (matched as gitleaks matches).
+      - name: Every file in the history is one the scans can read
+        run: |
+          # The script's main() runs only when invoked by its own path; prove it ran.
+          output=$(node scripts/check-scan-coverage.ts)
+          echo "$output"
+          grep -qE '^Checked [1-9][0-9]* paths' <<<"$output"
+      # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
+      # line in a .gitattributes would hide that path from the whole history scan, an
+      # `export-ignore` line would drop it from the tree scan below, and `working-tree-encoding`
+      # would export it as UTF-16, which gitleaks cannot match. This file outranks every
+      # .gitattributes; fonts stay binary by content (and by the check above).
+      - run: printf '* !diff\n* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
+      - name: Scan full history
+        run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
+      # The tree at HEAD is scanned too, with no exceptions, so neither an exception nor a
+      # rebase merge's new commit ids can leave a secret-like value in the tree.
+      - name: Scan the current tree
+        run: |
+          tree=$RUNNER_TEMP/tree report=$RUNNER_TEMP/report
+          mkdir "$tree" "$report"
+          git archive HEAD | tar -x -C "$tree"
+          test -s "$tree/package.json" || { echo '::error::the exported tree is empty'; exit 1; }
+          # No exceptions: gitleaks would load the exported .gitleaksignore, where an entry
+          # without a commit applies to a tree scan too. No committed file may sit where the
+          # canary goes, and no symbolic link, which gitleaks does not follow.
+          rm -f "$tree/.gitleaksignore"
+          if [ -e "$tree/.ci-canary" ]; then echo '::error::.ci-canary is committed'; exit 1; fi
+          links=$(find "$tree" -type l)
+          if [ -n "$links" ]; then echo "::error::symbolic links in the tree: $links"; exit 1; fi
+          # gitleaks reports a missing or unreadable directory as clean. A canary made now and
+          # never committed must be the only finding: that proves the tree was mounted and
+          # read and that the rules match, and any real finding still fails the step.
+          printf 'token = "ghp_%s"\n' "$(openssl rand -hex 18)" > "$tree/.ci-canary"
+          # Scanned as a one-commit repository, not as a directory: directory mode skips files
+          # with archive-like names (`menu.brand.ts`), text sniffed as an application format
+          # (`%PDF`, `SQLite`), everything under a directory with a skipped name, and matches
+          # across its chunk boundaries; git mode reads every text file whole. The attributes
+          # keep an exported .gitattributes from hiding or re-encoding a file.
+          git -C "$tree" init -q
+          printf '* !diff\n* !working-tree-encoding\n* !filter\n* !text\n' > "$tree/.git/info/attributes"
+          git -C "$tree" add -A --force
+          git -C "$tree" -c user.name=ci -c user.email=ci@example.invalid commit -qm tree
+          docker compose -f .github/ci-tools/compose.yaml run --rm \
+            -v "$tree:/tree:ro" -v "$report:/report" gitleaks-tree && exit 1
+          jq -e 'length > 0 and all(.[]; .File == ".ci-canary")' "$report/tree.json"
+      # Positive control: gitleaks reports a missing or empty directory as clean, so the tree
+      # scan reads its rules from inside the tree and must fail when no tree is there.
+      - name: The tree scan fails without a tree
+        run: |
+          output=$(docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks-tree 2>&1) && exit 1
+          grep -q 'unable to load gitleaks config' <<<"$output"
+          mkdir "$RUNNER_TEMP/empty"
+          output=$(docker compose -f .github/ci-tools/compose.yaml run --rm \
+            -v "$RUNNER_TEMP/empty:/tree:ro" gitleaks-tree 2>&1) && exit 1
+          grep -q 'unable to load gitleaks config' <<<"$output"
+
+  sast:
+    name: Static analysis (Semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The committed tree, as the tree scan exports it, with the pinned ignore file.
+      - name: Semgrep (TypeScript, React, Next.js, secrets rule packs)
+        run: |
+          tree=$RUNNER_TEMP/tree report=$RUNNER_TEMP/report
+          mkdir "$tree" "$report"
+          printf '* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
+          git archive HEAD | tar -x -C "$tree"
+          cp .github/ci-tools/semgrepignore "$tree/.semgrepignore"
+          docker compose -f .github/ci-tools/compose.yaml run --rm \
+            -v "$tree:/src:ro" -v "$report:/report" semgrep
+          # Semgrep scans a missing or empty directory without complaint: the report must
+          # list a file from src/ and one from tests/. A file it could not finish (a timeout,
+          # a parse error) shows only in the report's errors, and fails here.
+          jq -e '[.paths.scanned[] | select(. == "src/proxy.ts" or . == "tests/lint-rules.test.ts")]
+            | length == 2' "$report/semgrep.json"
+          jq -e '.errors == []' "$report/semgrep.json"
+
+  freshness:
+    name: Supply-chain freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: No accepted risk is past its review date
+        run: node scripts/check-risk-register.ts
+      - name: .nvmrc has every Node security release of its line, and the line is supported
+        run: node scripts/check-node-version.ts
+      - name: The pinned package manager has no Moderate, High or Critical advisory
+        run: node scripts/check-package-manager.ts
+      # Positive controls: each check must still fail, for the right reason, on a pin known to
+      # be bad. A check that cannot fail (or fails only on a network error) proves nothing.
+      - name: The checks still catch Node 22.22.1 and pnpm 10.28.0
+        run: |
+          output=$(node scripts/check-node-version.ts 22.22.1 2>&1) && exit 1
+          grep -q 'newer security releases' <<<"$output"
+          output=$(node scripts/check-package-manager.ts pnpm@10.28.0 2>&1) && exit 1
+          grep -q 'pnpm@10.28.0: high:' <<<"$output"
+
+  build:
+    name: Verify (lint · format · typecheck · tests · build) · E2E (axe) · Lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      # pnpm comes from Corepack, which checks it against the sha512 in package.json's
+      # packageManager (pnpm/action-setup drops that hash). Setup-node runs again to cache the store.
+      - run: corepack enable pnpm && pnpm --version
+        env:
+          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Environment for the server (placeholders are accepted outside APP_ENV=production)
+        run: cp .env.example .env
+      - run: pnpm verify
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+      - name: Lighthouse CI (mobile)
+        run: pnpm lhci
+      - name: Lighthouse scores to job summary
+        if: always()
+        # Also printed to the log, and as annotations, which the checks API serves to readers
+        # without a browser session (the summary and the artifact need one).
+        run: |
+          node scripts/lighthouse-summary.ts | tee -a "$GITHUB_STEP_SUMMARY"
+          node scripts/lighthouse-summary.ts --notices
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: lighthouse
+          path: .lighthouseci/
+          # The directory is hidden; upload-artifact skips hidden files by default.
+          include-hidden-files: true
+          retention-days: 14
+
+  services:
+    name: Docker Compose services
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: cp .env.example .env
+      - run: docker compose config --quiet
+      - name: Every published port binds to 127.0.0.1
+        run: docker compose config --format json | jq -e '[.services[].ports[]? | .host_ip] | length > 0 and all(. == "127.0.0.1")'
+      - run: docker compose up --detach --wait --wait-timeout 120
+      - name: Postgres has btree_gist
+        run: |
+          output=$(docker compose exec -T postgres psql -U popcorn -d popcorn -tAc \
+            "select 1 from pg_extension where extname = 'btree_gist'")
+          grep -qx 1 <<<"$output"
+      # Auth checks connect over the compose network like the app will; inside the
+      # container the official image trusts 127.0.0.1, which would prove nothing.
+      - name: Postgres rejects a wrong or missing password, for both roles
+        run: |
+          for user in popcorn popcorn_app; do
+            for password in wrong ''; do
+              # Must fail, and for the right reason (not, say, an unreachable host).
+              output=$(docker compose run --rm --no-deps -T -e PGPASSWORD="$password" \
+                --entrypoint psql postgres -h postgres -U "$user" -d popcorn -w -c 'select 1' 2>&1) \
+                && exit 1
+              grep -qE 'password authentication failed|no password supplied' <<<"$output"
+            done
+          done
+      - name: App role is not a superuser and cannot create in public
+        run: |
+          output=$(docker compose run --rm --no-deps -e PGPASSWORD=change-me-too --entrypoint psql \
+            postgres -h postgres -U popcorn_app -d popcorn -tAc \
+            "select rolsuper or has_schema_privilege('public', 'CREATE') from pg_roles where rolname = current_user")
+          grep -qx f <<<"$output"
+      - name: Redis rejects a missing or wrong password
+        run: |
+          output=$(docker compose exec -T redis sh -c 'unset REDISCLI_AUTH; redis-cli ping')
+          grep -q NOAUTH <<<"$output"
+          output=$(docker compose exec -T redis sh -c 'REDISCLI_AUTH=wrong redis-cli ping 2>&1')
+          grep -q WRONGPASS <<<"$output"
+      - name: Object storage sends no telemetry and is isolated from the other containers
+        run: |
+          # Exactly one telemetry flag, and it is off: a later flag would override an earlier one.
+          docker compose config --format json \
+            | jq -e '[.services.objectstore.command[] | select(test("^--?master\\.telemetry"))] == ["-master.telemetry=false"]'
+          # With telemetry on, weed logs "Reporting anonymous cluster statistics to …telemetry…".
+          # The log is captured first: piped into `grep -q`, compose failed writing to the closed
+          # pipe, and the check missed telemetry in most runs (37 of 40, measured).
+          logs=$(docker compose logs objectstore 2>&1)
+          if grep -qi telemetry <<<"$logs"; then
+            echo '::error::object-store telemetry is on'
+            exit 1
+          fi
+          # The probe reaches the filer from inside the object store …
+          docker compose exec -T objectstore wget -q -T 3 -O /dev/null http://127.0.0.1:8888/
+          # … and not from the other services, where the name does not even resolve.
+          for service in redis postgres; do
+            output=$(docker compose exec -T "$service" wget -q -T 3 -O /dev/null \
+              http://objectstore:8888/ 2>&1) && exit 1
+            grep -q 'bad address' <<<"$output"
+          done
+      - name: Object storage rejects anonymous access
+        run: |
+          set -a; . ./.env; set +a
+          test "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:${S3_PORT}/${S3_BUCKET}")" = 403
+      - name: Object storage round trip (signed PUT and GET; anonymous PUT and GET refused)
+        run: |
+          set -a; . ./.env; set +a
+          object=http://127.0.0.1:${S3_PORT}/${S3_BUCKET}/ci-probe.txt
+          sign=(--aws-sigv4 'aws:amz:us-east-1:s3' --user "$S3_ACCESS_KEY:$S3_SECRET_KEY")
+          echo popcorn | curl -sf "${sign[@]}" -X PUT --data-binary @- "$object"
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X PUT --data-binary x "$object")" = 403
+          test "$(curl -sf "${sign[@]}" "$object")" = popcorn
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$object")" = 403
+      - if: always()
+        run: docker compose down --volumes

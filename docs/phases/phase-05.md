@@ -9,18 +9,18 @@
 ## PRها
 
 - [ ] **PR 5.1 — SEO**
-    - metadata کامل دوزبانه، `hreflang`، sitemap، robots، JSON-LD برای Restaurant و Menu هر برند، صفحات 404 و 500 برندشده
+  - metadata کامل دوزبانه، `hreflang`، sitemap، robots، JSON-LD برای Restaurant و Menu هر برند، صفحات 404 و 500 برندشده
 - [ ] **PR 5.2 — Production**
-    - `docker-compose.prod.yml`: nginx (TLS، CSP با nonce، HSTS، تنظیم SSE)، app، worker، postgres، redis، minio
-    - GlitchTip، Uptime Kuma، لاگ ساختاریافته با Mask کردن موبایل
+  - `docker-compose.prod.yml`: nginx (TLS، CSP با nonce، HSTS، تنظیم SSE)، app، worker، postgres، redis، object storage سازگار با S3 (SeaweedFS یا سرویس ابری داخلی؛ انتخاب در همین فاز طبق ADR 0013)
+  - GlitchTip، Uptime Kuma، لاگ ساختاریافته با Mask کردن موبایل
 - [ ] **PR 5.3 — بکاپ و Runbook**
-    - بکاپ روزانه رمزنگاری‌شده با نگهداری ۳۰ روزه، اسکریپت Restore
-    - `docs/runbooks/`: deploy، rollback، restore، قطعی پیامک، قطعی درگاه
+  - بکاپ روزانه رمزنگاری‌شده با نگهداری ۳۰ روزه، اسکریپت Restore
+  - `docs/runbooks/`: deploy، rollback، restore، قطعی پیامک، قطعی درگاه
 - [ ] **PR 5.4 — تست بار و بررسی نهایی**
-    - k6 روی جستجوی اسلات و ثبت رزرو؛ اصلاح کوئری‌های کند با `EXPLAIN`
-    - اجرای کامل `security-reviewer` روی کل کدبیس
+  - k6 روی جستجوی اسلات و ثبت رزرو؛ اصلاح کوئری‌های کند با `EXPLAIN`
+  - اجرای کامل `security-reviewer` روی کل کدبیس
 - [ ] **PR 5.5 — Release**
-    - CHANGELOG، تگ `v1.0.0`، استقرار، Smoke test روی Production
+  - CHANGELOG، تگ `v1.0.0`، استقرار، Smoke test روی Production
 
 ## Blocked
 

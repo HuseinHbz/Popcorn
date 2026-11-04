@@ -11,13 +11,13 @@
 ## PRها
 
 - [ ] **PR 8.1 — بلاگ**
-    - `posts` با Tiptap و خروجی JSON، رندر sanitize‌شده، دسته و تگ، SEO و JSON-LD Article
+  - `posts` با Tiptap و خروجی JSON، رندر sanitize‌شده، دسته و تگ، SEO و JSON-LD Article
 - [ ] **PR 8.2 — زیرساخت Sync**
-    - Worker برای `outbox_events` با retry و backoff، idempotency key، `sync_mappings`، صفحه وضعیت Sync در ادمین
+  - Worker برای `outbox_events` با retry و backoff، idempotency key، `sync_mappings`، صفحه وضعیت Sync در ادمین
 - [ ] **PR 8.3 — Adapter سپیدز**
-    - همگام‌سازی منو و سفارش طبق جهت تعیین‌شده در ADR 0011
+  - همگام‌سازی منو و سفارش طبق جهت تعیین‌شده در ADR 0011
 - [ ] **PR 8.4 — Adapter راهکاران**
-    - ارسال اسناد فروش و صورتحساب، تطبیق روزانه مبالغ
+  - ارسال اسناد فروش و صورتحساب، تطبیق روزانه مبالغ
 
 ## Blocked
 

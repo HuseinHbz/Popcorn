@@ -1,0 +1,48 @@
+# Weekly dependency updates (ADR 0016: versions are pinned; upgrades are explicit PRs).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Let new releases age before proposing them (pairs with pnpm minimumReleaseAge).
+    cooldown:
+      default-days: 3
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: build
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Let new releases age before proposing them (pairs with pnpm minimumReleaseAge).
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    # Let new releases age before proposing them (pairs with pnpm minimumReleaseAge).
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: build
+      include: scope
+
+  # Digest-pinned CI tool images (gitleaks, Semgrep).
+  - package-ecosystem: docker-compose
+    directory: /.github/ci-tools
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: ci
