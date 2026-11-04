@@ -39,3 +39,16 @@ The count the code review flags is noted here rather than rewritten in history: 
 4. Accept ADR 0013, or amend `docs/phases/phase-00.md`, whose PR 0.2 still names MinIO.
 5. After the merge: Dependabot security updates and GitHub's non-provider secret patterns
    (G1, F10), and the plan §11 questions that keep ADRs 0010 and 0011 `Proposed`.
+
+## Owner decisions after the closing review (2026-11-04)
+
+1. D1 and D2: the force-push was approved and done, so the D1/D2 row above is closed.
+   [`history-rewrite.md`](history-rewrite.md) lists what changed and maps every old commit to
+   its new one.
+2. N3: the owner chose to merge Phase 0 before adding the `main` ruleset, which is the next step
+   (register row "Branch protection on `main`").
+3. N6: the repository stays public for now. Licensed Peyda files and real data are still never
+   committed (register row "Repository visibility").
+4. ADR 0013 is accepted. `docs/phases/phase-00.md` PR 0.2 now names SeaweedFS, and phases 3 and
+   5 name S3-compatible storage.
+5. Unchanged, after the merge: decision 5 above.
