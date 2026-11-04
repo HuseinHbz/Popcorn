@@ -33,4 +33,14 @@ describe('.github/ci-tools', () => {
     expect(new Set(pinned).size).toBe(1);
     expect(/gitleaks (v[\d.]+)'s default configuration/.exec(list)?.[1]).toBe(pinned[0]);
   });
+
+  // Security review round 9, Q1: with rename detection, text renamed from an accepted image is
+  // diffed as binary and never read. The coverage check judges each change at its own path,
+  // so the history scan must pair changes the same way.
+  it('pairs changes in the history scan as the coverage check does, without renames', () => {
+    const compose = readFileSync('.github/ci-tools/compose.yaml', 'utf8');
+    const logOpts = /--log-opts=(.*)$/m.exec(compose)?.[1]?.split(' ') ?? [];
+    expect(logOpts).toEqual(expect.arrayContaining(['--all', '-m', '--no-renames']));
+    expect(readFileSync('scripts/check-scan-coverage.ts', 'utf8')).toContain("'--no-renames'");
+  });
 });
