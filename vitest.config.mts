@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   resolve: {
@@ -9,6 +9,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'tests/**/*.test.ts'],
+    // Lint fixtures (some named *.test.ts) are linted by tests/lint-rules.test.ts, never run.
+    exclude: [...configDefaults.exclude, 'tests/fixtures/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

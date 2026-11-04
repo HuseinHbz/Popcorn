@@ -54,6 +54,11 @@ asserts it fires.
   - `linterOptions.noInlineConfig` ignores and reports inline `eslint-disable`.
   - An exception is an override in `eslint.config.mjs` next to its ADR link. This is stricter
     than CLAUDE.md's "no `eslint-disable` without an ADR link" and implements it.
+  - Overrides today (one of the three that would trigger "Revisit when"): tests of the brand
+    domain (`src/modules/brand/**/*.test.ts`) may hold hex colour literals, because checking and
+    deriving colours is that module's job (ADR 0019); only the raw-colour selectors are dropped
+    there. Fixtures prove the ban still fires in the brand domain's own source and in another
+    module's tests. Vitest never runs the lint fixtures, some of which are named `*.test.ts`.
 - **Boundaries:** `eslint-plugin-boundaries` with `checkAllOrigins` and `checkUnknownLocals`.
   - Imports resolve to files, so relative paths and aliases are judged alike.
   - Same-module internals are allowed. Another module is reachable only through `server/index.ts`.
