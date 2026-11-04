@@ -11,7 +11,7 @@
 - [ ] **PR 5.1 — SEO**
   - metadata کامل دوزبانه، `hreflang`، sitemap، robots، JSON-LD برای Restaurant و Menu هر برند، صفحات 404 و 500 برندشده
 - [ ] **PR 5.2 — Production**
-  - `docker-compose.prod.yml`: nginx (TLS، CSP با nonce، HSTS، تنظیم SSE)، app، worker، postgres، redis، minio
+  - `docker-compose.prod.yml`: nginx (TLS، CSP با nonce، HSTS، تنظیم SSE)، app، worker، postgres، redis، object storage سازگار با S3 (SeaweedFS یا سرویس ابری داخلی؛ انتخاب در همین فاز طبق ADR 0013)
   - GlitchTip، Uptime Kuma، لاگ ساختاریافته با Mask کردن موبایل
 - [ ] **PR 5.3 — بکاپ و Runbook**
   - بکاپ روزانه رمزنگاری‌شده با نگهداری ۳۰ روزه، اسکریپت Restore

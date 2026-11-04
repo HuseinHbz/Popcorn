@@ -13,7 +13,7 @@
   - اسکریپت `pnpm verify` = lint + typecheck + test + build
   - ساختار پوشه طبق CLAUDE.md با `index.ts` خالی در هر ماژول
 - [x] **PR 0.2 — محیط Docker توسعه**
-  - `docker-compose.dev.yml`: PostgreSQL (با `btree_gist`)، Redis، MinIO
+  - `docker-compose.dev.yml`: PostgreSQL (با `btree_gist`)، Redis، SeaweedFS (S3 سازگار، ADR 0013)
   - `src/shared/config/env.ts`: اعتبارسنجی همه متغیرهای محیطی با Zod؛ برنامه بدون env معتبر بالا نمی‌آید
   - `.env.example` فقط با Placeholder
 - [x] **PR 0.3 — i18n، RTL و ابزارهای پایه**

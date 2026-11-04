@@ -39,7 +39,7 @@ so that every later phase starts from green gates instead of setting them up ad 
 - Design tokens pipeline (`tokens.json` → Tailwind) and the type scale; the Peyda files themselves (licence pending) — Phase 1.
 - Database schema, migrations and the app's first use of `env` values — Phase 2.
 - Production Dockerfile, Nginx and deployment — Phase 5.
-- Deviation from `phase-00.md` PR 0.2: MinIO is replaced by SeaweedFS because MinIO images are no longer published (ADR 0013, proposed).
+- Production object storage — Phase 5 (ADR 0013). Local development and CI use SeaweedFS, which `phase-00.md` PR 0.2 now names in place of MinIO.
 
 ## Open questions
 

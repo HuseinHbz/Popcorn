@@ -11,7 +11,7 @@
 - [ ] **PR 3.1 — Schema منو**
   - `menu_categories` (با `brand_id`)، `menu_items`، `menu_item_images`، `branch_menu_items` (قیمت و موجودی)، `modifier_groups`، `modifiers`، `item_groups`، `item_group_members`
 - [ ] **PR 3.2 — Pipeline تصویر**
-  - آپلود به MinIO، Job در Worker برای ساخت AVIF/WebP در چند اندازه و blur placeholder
+  - آپلود به object storage سازگار با S3 (ADR 0013)، Job در Worker برای ساخت AVIF/WebP در چند اندازه و blur placeholder
   - اعتبارسنجی MIME واقعی و حجم
 - [ ] **PR 3.3 — مدیریت منو در ادمین**
   - دسته‌بندی‌ها و آیتم‌ها با Drag برای ترتیب، تصاویر چندگانه، قیمت و موجودی هر شعبه، Modifierها، گروه‌های آیتم
