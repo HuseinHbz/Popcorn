@@ -17,11 +17,11 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 - CI (ADR 0016): every step under `shell: bash` (pipefail); commit-message and audit gates, `pnpm verify`, E2E, Lighthouse asserted on the median of 7 runs with a score summary and annotations, Semgrep on the exported tree (tests included, files of any size, errors fail) and gitleaks on the full history (merge diffs included) and on the exported tree, committed as a one-commit repository, with a canary and no exceptions (pinned configuration; inline markers ignored, `.gitattributes` overridden, scanner config files rejected, and every file in the history checked to be one the scans can read, text over binary and Unicode-folded names included; history exceptions only with a written reason; known gaps in ADR 0016), Compose auth and isolation checks and an S3 round trip, freshness checks (on every push and weekly) for Node security releases and end of life, pnpm advisories (Moderate and up) and the risk register, with positive controls on known-bad pins; actions and images pinned by SHA/digest; Dependabot with cooldown.
 - `.github/CODEOWNERS`: every path to the owner, the security and supply-chain controls named.
 - Security headers: CSP baseline, HSTS, frame denial, nosniff, Referrer-Policy, Permissions-Policy, COOP, CORP.
-- Docs: story `platform-foundation`, ADRs 0013–0018 (proposed), security risk register, Phase 0 scorecards and responses.
+- Docs: story `platform-foundation`, ADR 0013 (accepted), ADRs 0014–0018 (proposed), security risk register, Phase 0 scorecards and responses.
 
 ### Changed
 
-- ADR 0008: amendment proposed in ADR 0013 (MinIO community images are discontinued; local S3 would be SeaweedFS).
+- ADR 0008: amended by ADR 0013, accepted (MinIO community images are discontinued; local development and CI use SeaweedFS).
 - Merged the maintainer's execution phases (`docs/phases/`, `/phase` and `/review` commands).
 
 ### Earlier

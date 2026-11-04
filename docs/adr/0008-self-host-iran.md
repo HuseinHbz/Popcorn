@@ -3,7 +3,7 @@
 - Status: Accepted
 - Date: 2026-10-26
 - Score: 98/100 (rubric: docs/project-plan.md §3)
-- Amendment proposed in: [ADR 0013](0013-object-storage-seaweedfs.md) (pending acceptance) — MinIO community images are discontinued; local S3 would be SeaweedFS
+- Amended by: [ADR 0013](0013-object-storage-seaweedfs.md) (accepted 2026-11-04) — MinIO community images are discontinued; local development and CI use SeaweedFS, and Phase 5 chooses production storage
 
 ## Context
 

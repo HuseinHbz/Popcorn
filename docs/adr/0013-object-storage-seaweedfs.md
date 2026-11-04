@@ -1,9 +1,9 @@
 # ADR 0013: S3-compatible object storage for local development and CI — SeaweedFS
 
-- Status: Proposed
+- Status: Accepted (product owner, 2026-11-04)
 - Date: 2026-10-27
 - Score: 99/100 (code review round 9, at `b3325eb`, `docs/scorecards/phase-0/foundation-round-9.md`).
-- Proposes an amendment to: ADR 0008 (MinIO in the service list)
+- Amends: ADR 0008 (MinIO in the service list)
 
 ## Context
 

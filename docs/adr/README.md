@@ -14,7 +14,7 @@
 | [0010](0010-payment-sep.md)              | Saman Kish (SEP) behind a PaymentGateway adapter                        | Proposed | 96            |
 | [0011](0011-sync-sepidz-rahkaran.md)     | Sync with Sepidz (ordering) and Rahkaran (finance)                      | Proposed | 85            |
 | [0012](0012-fonts.md)                    | Typography: Peyda headlines, Vazirmatn body                             | Accepted | 98            |
-| [0013](0013-object-storage-seaweedfs.md) | S3-compatible object storage for local development and CI — SeaweedFS   | Proposed | 99 (round 9)  |
+| [0013](0013-object-storage-seaweedfs.md) | S3-compatible object storage for local development and CI — SeaweedFS   | Accepted | 99 (round 9)  |
 | [0014](0014-toolchain-baseline.md)       | Toolchain baseline — versions, runtime and Next.js 16 conventions       | Proposed | 100 (round 9) |
 | [0015](0015-rule-enforcement.md)         | Enforce the engineering rules with tooling, proven by tests             | Proposed | 100 (round 9) |
 | [0016](0016-supply-chain-controls.md)    | Supply-chain controls for dependencies, CI and images                   | Proposed | 98 (round 9)  |
@@ -24,5 +24,5 @@
 An ADR below 98 stays `Proposed` until a review scores it at 98 or more; the review lists the points
 it lost. "Revisit when" lists the events that would reopen the decision. Scores are from the latest
 review; ADRs amended since then are re-scored in the next round. An ADR at 98 or more stays
-`Proposed` until the product owner accepts it; ADR 0013 also replaces MinIO, which
-`docs/phases/phase-00.md` still names.
+`Proposed` until the product owner accepts it. The product owner accepted ADR 0013 on
+2026-11-04; it replaces MinIO in the phase plans.
