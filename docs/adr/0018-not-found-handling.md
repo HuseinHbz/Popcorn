@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: 100/100 (code review round 8, at `1898889`, `docs/scorecards/phase-0/foundation-round-8.md`).
+- Score: 100/100 (code review round 9, at `b3325eb`, `docs/scorecards/phase-0/foundation-round-9.md`).
 - Related: ADR 0014 (Next.js 16 conventions), story platform-foundation AC19
 
 ## Context

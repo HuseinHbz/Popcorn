@@ -2,7 +2,7 @@
 
 - Status: Proposed
 - Date: 2026-10-27
-- Score: 99/100 (code review round 8, at `1898889`, `docs/scorecards/phase-0/foundation-round-8.md`). Amended after round 8; re-score pending.
+- Score: 100/100 (code review round 9, at `b3325eb`, `docs/scorecards/phase-0/foundation-round-9.md`).
 - Related: ADR 0001 (module boundaries), CLAUDE.md "Non-negotiables", ADR 0014 (toolchain)
 
 ## Context
