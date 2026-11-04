@@ -14,11 +14,11 @@ the logo files and fixed in `tokens.json`, which blocked PR 1.1.
 The current logos were received on 2026-11-04 as raster files (kept for reference in
 `docs/brand/source/`):
 
-| Brand    | File                                | Size      | Colours                |
-| -------- | ----------------------------------- | --------- | ---------------------- |
-| Nakaya   | `nakaya-logo-white-on-black.jpg`    | 1080×1080 | white on black         |
-| Izakaya  | `izakaya-logo-white-on-black.png`   | 447×447   | white on black         |
-| em. café | `em-cafe-logo-black-on-white.png`   | 447×447   | black on white         |
+| Brand    | File                              | Size      | Colours        |
+| -------- | --------------------------------- | --------- | -------------- |
+| Nakaya   | `nakaya-logo-white-on-black.jpg`  | 1080×1080 | white on black |
+| Izakaya  | `izakaya-logo-white-on-black.png` | 447×447   | white on black |
+| em. café | `em-cafe-logo-black-on-white.png` | 447×447   | black on white |
 
 A pixel scan found 0% chromatic pixels in all three. The logos are strictly monochrome, so **no brand
 colour can be derived from them**: any accent colour is a design choice, not a brand fact. This also
