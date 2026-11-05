@@ -25,24 +25,4 @@ describe('commitlint', () => {
       expect(lint(message)).not.toBe(0);
     },
   );
-
-  // Dependabot's subjects start with a capital "Bump", which subject-case rejects; only its
-  // exact shape is skipped (commitlint.config.mjs).
-  const signOff = '\n\nSigned-off-by: dependabot[bot] <support@github.com>\n';
-  it.each([
-    'build(deps-dev): Bump the minor-and-patch group with 2 updates',
-    'build(deps): Bump postgres from 17.11-alpine to 17.12-alpine',
-    'ci: Bump actions/checkout from 7.0.1 to 7.0.2',
-  ])('accepts Dependabot\'s "%s" with its sign-off', (header) => {
-    expect(lint(`${header}\n\nBumps the group.${signOff}`)).toBe(0);
-  });
-
-  it.each([
-    ['without the sign-off', 'build(deps): Bump postgres from 17.11 to 17.12\n'],
-    ['with another subject', `feat: Add a capitalised subject${signOff}`],
-    ['with another scope', `build(ui): Bump the button padding${signOff}`],
-    ['with the sign-off mid-body', `build(deps): Bump x from 1 to 2${signOff}\nMore text.\n`],
-  ])('still lints a capitalised subject %s', (_case, message) => {
-    expect(lint(message)).not.toBe(0);
-  });
 });

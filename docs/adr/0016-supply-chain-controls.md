@@ -116,8 +116,10 @@ Constraints:
     never proposes a major version of Node, `@types/node`, PostgreSQL or Redis: those are
     upgraded only by a deliberate PR with an ADR (Node and its types move together, PostgreSQL
     data needs a dump/restore or `pg_upgrade`, and a Redis major needs a licence review).
-    Commitlint skips messages in Dependabot's exact shape, whose capitalised "Bump" its
-    subject-case rule would reject.
+    Commitlint's subject-case rule, which Dependabot's capitalised "Bump" fails, is off only
+    for commits Dependabot made (ADR 0015): the actor GitHub sets, or the commit's author
+    email, and Dependabot's message shape. The author email can be set by anyone who can push,
+    which today is only the owner; the actor cannot be set from the repository at all.
 
 ## Consequences
 
