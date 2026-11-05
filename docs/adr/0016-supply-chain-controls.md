@@ -99,7 +99,9 @@ Constraints:
       signature. Text written over binary content at the same path fails too, because git
       diffs the pair as binary. A text file on gitleaks' built-in path allowlist (an `.svg`, a
       `.pdf`, a file named `gitleaks.toml`, `node_modules/`, …) must be one of three expected
-      files (the pinned configuration, `pnpm-lock.yaml`, `src/app/icon.svg`); names are matched
+      files (the pinned configuration, `pnpm-lock.yaml`, `src/app/icon.svg`), or one of the
+      three traced brand marks in `docs/brand/traced/`, each accepted only as a path-only mark by
+      the allowlist the logo pipeline also uses (`src/modules/brand/domain/mark.ts`); names are matched
       as gitleaks' Go patterns match them, Unicode case folding included. The allowlist is
       copied from the pinned gitleaks version, and a test fails when the versions differ. CI
       requires the script's summary line, so a run that skipped it fails;

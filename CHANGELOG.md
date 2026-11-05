@@ -21,6 +21,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 ### Changed
 
+- The scan-coverage check accepts the three traced brand marks in `docs/brand/traced/` (skipped by gitleaks as `.svg` files) only at their exact paths and only as path-only marks, by the shared allowlist in `src/modules/brand/domain/mark.ts` that the logo pipeline reuses; the risk register records the exception.
 - ADR 0008: amended by ADR 0013, accepted (MinIO community images are discontinued; local development and CI use SeaweedFS).
 - Merged the maintainer's execution phases (`docs/phases/`, `/phase` and `/review` commands).
 - Rewrote the Phase 0 branch history before the first merge: one concern per commit, the plan's reformat in the `style(docs)` commit, and every commit passing its own secret-scan guard (`docs/scorecards/phase-0/history-rewrite.md`).

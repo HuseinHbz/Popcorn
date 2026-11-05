@@ -10,7 +10,8 @@
  *   detection, so a change is paired with its own path's previous blob in each (the history
  *   scan's --no-renames, .github/ci-tools/compose.yaml);
  * - a text file on gitleaks' default path allowlist (.github/ci-tools/gitleaks-skipped-paths.txt)
- *   must be one of the expected ones.
+ *   must be one of the expected ones, and a traced brand mark (an .svg) must also be path-only,
+ *   by the same allowlist the logo pipeline uses (src/modules/brand/domain/mark.ts).
  * Paths are read with `-z`, so names git would quote (non-ASCII, quotes) are checked as they
  * are, and matched as gitleaks' Go patterns match them (Unicode case folding).
  * Security reviews round 6 (J1, J5), round 7 (K1, K2), round 8 (P1, P3) and round 9 (Q1).
@@ -18,6 +19,8 @@
  */
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+
+import { parseMark } from '../src/modules/brand/domain/mark.ts';
 
 /** A blob a change added at a path, and the regular-file blob git diffs it against. */
 export type Change = { blob: string; path: string; previous?: string };
@@ -27,6 +30,17 @@ export const EXPECTED_SKIPPED = new Set([
   '.github/ci-tools/gitleaks.toml',
   'pnpm-lock.yaml',
   'src/app/icon.svg',
+]);
+
+/**
+ * The traced brand marks (ADR 0019), skipped by gitleaks as .svg files. Each is accepted only
+ * as a path-only mark, which holds path commands and numbers and no text a secret could sit in
+ * (risk register). Exactly these paths: any other .svg still fails.
+ */
+export const EXPECTED_MARKS = new Set([
+  'docs/brand/traced/em-cafe-mark.svg',
+  'docs/brand/traced/izakaya-mark.svg',
+  'docs/brand/traced/nakaya-mark.svg',
 ]);
 
 const bytes = (...values: number[]): Buffer => Buffer.from(values);
@@ -128,10 +142,12 @@ function problem(
     if (!signature(content)) return `${path}: not a ${extension} file (no ${extension} signature)`;
     return undefined;
   }
-  if (skipped.some((pattern) => pattern.test(path)) && !EXPECTED_SKIPPED.has(path)) {
-    return `${path}: a text file that gitleaks skips by its name`;
+  if (!skipped.some((pattern) => pattern.test(path)) || EXPECTED_SKIPPED.has(path)) {
+    return undefined;
   }
-  return undefined;
+  if (!EXPECTED_MARKS.has(path)) return `${path}: a text file that gitleaks skips by its name`;
+  const mark = parseMark(content.toString('utf8'));
+  return mark.ok ? undefined : `${path}: not a path-only brand mark (${mark.reason})`;
 }
 
 /** One message per change the scans cannot read; empty when every file is covered. */
