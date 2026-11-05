@@ -26,6 +26,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 - Rewrote the Phase 0 branch history before the first merge: one concern per commit, the plan's reformat in the `style(docs)` commit, and every commit passing its own secret-scan guard (`docs/scorecards/phase-0/history-rewrite.md`).
 - The Lighthouse summary step says there are no results when Lighthouse CI stopped before writing its manifest, instead of crashing on the missing file; the Lighthouse CI step carries the failure.
 - `pnpm lhci` runs `scripts/lighthouse-ci.ts` instead of `lhci autorun`, with the same steps in the same order. If a run still ends in a Lighthouse runtime error (NO_NAVSTART, NO_FCP or PROTOCOL_TIMEOUT) after lhci's own three tries, collection runs once more, with a `::warning::` annotation and a line in the job summary. Score failures are never retried; a second failure, an upload failure or a step killed by a signal fails the step.
+- The Lighthouse summary also gives each page's median FCP, LCP, TBT and CLS, read from the run reports, in the job summary and in each page's annotation.
 
 ### Earlier
 
