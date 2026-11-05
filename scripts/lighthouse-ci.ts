@@ -5,7 +5,8 @@
  *   when one run failed three times in a row. A second collect failure fails the step. Scores are
  *   checked by assert, which never runs twice, so a score failure is never retried;
  * - an upload failure fails the step (autorun only warns), since the summary and the artifact
- *   need the report;
+ *   need the report. The target is the filesystem; if it ever becomes a remote server, revisit
+ *   this, because an outage there would then fail the gate;
  * - a step killed by a signal counts as failed (autorun counts it as passed).
  * Risk register: "Lighthouse runtime-error retry".
  * Usage: pnpm lhci
