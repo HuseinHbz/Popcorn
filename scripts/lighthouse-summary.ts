@@ -3,9 +3,11 @@
  * and the min–max range, so the numbers behind the CI gate are visible. With --notices it
  * prints one GitHub Actions notice per URL instead: the checks API serves those as
  * annotations, readable without the browser session the log and summary need.
+ * If Lighthouse CI wrote no manifest (a run hit a Lighthouse runtime error, so collection
+ * stopped), it says so instead of crashing; the Lighthouse CI step already carries the failure.
  * Usage: node scripts/lighthouse-summary.ts [--notices]
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 type ManifestEntry = { url: string; summary: Record<string, number> };
 
@@ -60,10 +62,23 @@ export function lighthouseNotices(manifest: ManifestEntry[]): string {
     .join('\n');
 }
 
+const NO_RESULTS =
+  'No results: Lighthouse CI stopped before writing its manifest. See the "Lighthouse CI (mobile)" step.';
+
+/** The step's output; `undefined` means Lighthouse CI wrote no manifest. */
+export function lighthouseSummary(manifest: ManifestEntry[] | undefined, notices: boolean): string {
+  if (manifest === undefined) {
+    return notices
+      ? `::error title=Lighthouse::${NO_RESULTS}`
+      : `### Lighthouse (mobile)\n\n${NO_RESULTS}`;
+  }
+  return notices ? lighthouseNotices(manifest) : lighthouseTable(manifest);
+}
+
 if (import.meta.filename === process.argv[1]) {
-  const manifest = JSON.parse(
-    readFileSync('.lighthouseci/manifest.json', 'utf8'),
-  ) as ManifestEntry[];
-  const notices = process.argv.includes('--notices');
-  console.log(notices ? lighthouseNotices(manifest) : lighthouseTable(manifest));
+  const file = '.lighthouseci/manifest.json';
+  const manifest = existsSync(file)
+    ? (JSON.parse(readFileSync(file, 'utf8')) as ManifestEntry[])
+    : undefined;
+  console.log(lighthouseSummary(manifest, process.argv.includes('--notices')));
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { lighthouseNotices, lighthouseTable } from '../scripts/lighthouse-summary';
+import {
+  lighthouseNotices,
+  lighthouseSummary,
+  lighthouseTable,
+} from '../scripts/lighthouse-summary';
 
 const run = (url: string, performance: number) => ({
   url,
@@ -37,5 +41,18 @@ describe('lighthouseNotices', () => {
       '::notice title=Lighthouse /fa (3 runs)::performance 97 (95–99), accessibility 100, best-practices 100, seo 100',
       '::notice title=Lighthouse /en (1 runs)::performance 98, accessibility 100, best-practices 100, seo 100',
     ]);
+  });
+});
+
+describe('lighthouseSummary', () => {
+  it('says there are no results when Lighthouse CI wrote no manifest', () => {
+    expect(lighthouseSummary(undefined, false)).toContain('No results: Lighthouse CI stopped');
+    expect(lighthouseSummary(undefined, true)).toMatch(/^::error title=Lighthouse::No results/);
+  });
+
+  it('prints the table or the notices when there is a manifest', () => {
+    const manifest = [run('http://x/fa', 0.97)];
+    expect(lighthouseSummary(manifest, false)).toBe(lighthouseTable(manifest));
+    expect(lighthouseSummary(manifest, true)).toBe(lighthouseNotices(manifest));
   });
 });
