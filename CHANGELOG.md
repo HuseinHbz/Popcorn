@@ -21,6 +21,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 ### Changed
 
+- commitlint skips messages in Dependabot's exact shape (its type and scope, "Bump", its sign-off as the last line), whose capitalised verb `subject-case` rejected on every Dependabot PR.
 - Dependabot no longer proposes major versions of Node, `@types/node`, PostgreSQL or Redis; those are upgraded only by a deliberate PR with an ADR, and the PostgreSQL 18 upgrade path is a risk-register item for Phase 5.
 - ADR 0008: amended by ADR 0013, accepted (MinIO community images are discontinued; local development and CI use SeaweedFS).
 - Merged the maintainer's execution phases (`docs/phases/`, `/phase` and `/review` commands).

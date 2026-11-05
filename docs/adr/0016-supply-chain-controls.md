@@ -116,6 +116,8 @@ Constraints:
     never proposes a major version of Node, `@types/node`, PostgreSQL or Redis: those are
     upgraded only by a deliberate PR with an ADR (Node and its types move together, PostgreSQL
     data needs a dump/restore or `pg_upgrade`, and a Redis major needs a licence review).
+    Commitlint skips messages in Dependabot's exact shape, whose capitalised "Bump" its
+    subject-case rule would reject.
 
 ## Consequences
 
