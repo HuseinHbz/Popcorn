@@ -112,7 +112,10 @@ Constraints:
     authors every pull request, GitHub requests no review, so until a second maintainer exists
     the control is the owner reading the diff before merging; the ruleset then requires
     code-owner review (risk register).
-  - Dependabot covers npm, GitHub Actions and both compose files, after a 3-day cooldown.
+  - Dependabot covers npm, GitHub Actions and both compose files, after a 3-day cooldown. It
+    never proposes a major version of Node, `@types/node`, PostgreSQL or Redis: those are
+    upgraded only by a deliberate PR with an ADR (Node and its types move together, PostgreSQL
+    data needs a dump/restore or `pg_upgrade`, and a Redis major needs a licence review).
 
 ## Consequences
 
