@@ -1,4 +1,8 @@
 # Weekly dependency updates (ADR 0016: versions are pinned; upgrades are explicit PRs).
+# Major versions of the runtime and the data services are never proposed here: Node and its
+# types must move together (types ahead of the runtime accept APIs it does not have), PostgreSQL
+# majors need a dump/restore or pg_upgrade, and a Redis major needs a licence review. Each is
+# upgraded only by a deliberate PR with an ADR.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -12,6 +16,9 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: build
       include: scope
@@ -33,6 +40,14 @@ updates:
     # Let new releases age before proposing them (pairs with pnpm minimumReleaseAge).
     cooldown:
       default-days: 3
+    ignore:
+      - dependency-name: postgres
+        update-types: ['version-update:semver-major']
+      - dependency-name: redis
+        update-types: ['version-update:semver-major']
+      # No Node image yet; the rule is in place for the first one (Phase 5).
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: build
       include: scope

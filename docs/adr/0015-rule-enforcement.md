@@ -121,6 +121,12 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
   attribute selector, scoped to the one file that renders it.
 
 - **Size and types:** `max-lines-per-function: 40`, `max-lines: 300`, no `any`, no `@ts-ignore`.
+- **Commit messages:** commitlint with config-conventional, on every commit CI sees
+  (`scripts/lint-commits.ts`). Its one exception is `subject-case` for commits Dependabot made,
+  whose subjects start with a capital "Bump": the run's actor is `dependabot[bot]` or the
+  commit's author email is Dependabot's, and the message has Dependabot's shape; every other
+  rule applies (`commitlint.dependabot.config.mjs`). A human commit with a forged Dependabot
+  message is linted in full, and a test proves it.
 
 ## Consequences
 
