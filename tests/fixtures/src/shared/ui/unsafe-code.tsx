@@ -1,10 +1,13 @@
 // Code execution and unescaped markup (security reviews round 3 F8, round 4 G4, round 5 H5).
 import Script from 'next/script';
+import NextScript from 'next/script'; // expect: no-restricted-syntax
+import * as ScriptModule from 'next/script'; // expect: no-restricted-syntax
 import { createElement } from 'react';
+import { jsx } from 'react/jsx-runtime';
 
 export const run = (code: string): unknown => eval(code); // expect: no-eval
 export const build = (): unknown => new Function('return 1'); // expect: no-new-func, @typescript-eslint/no-implied-eval
-export const Html = ({ html }: { html: string }) => <div dangerouslySetInnerHTML={{ __html: html }} />; // expect: react/no-danger
+export const Html = ({ html }: { html: string }) => <div dangerouslySetInnerHTML={{ __html: html }} />; // expect: react/no-danger, no-restricted-syntax
 export const Link = () => <a href="javascript:void(0)">{null}</a>; // expect: react/jsx-no-script-url, no-script-url
 export const Created = ({ html }: { html: string }) => createElement('div', { dangerouslySetInnerHTML: { __html: html } }); // expect: no-restricted-syntax
 export const Spread = ({ html }: { html: string }) => <div {...{ dangerouslySetInnerHTML: { __html: html } }} />; // expect: no-restricted-syntax
@@ -50,6 +53,16 @@ export const NextInline = ({ code }: { code: string }) => <Script id="inline">{c
 export const scriptElement = (code: string): HTMLScriptElement => { const element = document.createElement('script'); element.text = code; return element; }; // expect: no-restricted-syntax
 export const scriptNode = (code: string) => createElement('script', null, code); // expect: no-restricted-syntax
 export const computedExec = (html: string): boolean => document['execCommand']('insertHTML', false, html); // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const NextDanger = ({ code }: { code: string }) => <Script id="danger" dangerouslySetInnerHTML={{ __html: code }} />; // expect: no-restricted-syntax
+export const Renamed = ({ code }: { code: string }) => <NextScript id="renamed">{code}</NextScript>; // reported on its import
+export const Namespaced = () => <ScriptModule.default src="/a.js" />; // reported on its import
+export const scriptComponent = (code: string) => createElement(Script, { id: 'created' }, code); // expect: no-restricted-syntax
+export const scriptRuntime = (code: string) => jsx(Script, { id: 'runtime', children: code }); // expect: no-restricted-syntax
+export const templateTag = (): HTMLElement => document.createElement(`script`); // expect: no-restricted-syntax
+export const tagName = 'script'; // expect: no-restricted-syntax
+export const computedCreate = (): HTMLElement => document['createElement']('script'); // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const calledCreate = (): HTMLElement => document.createElement.call(document, 'script'); // expect: no-restricted-syntax, @typescript-eslint/no-deprecated
+export const runtimeTag = (code: string) => jsx('script', { children: code }); // expect: no-restricted-syntax
 
 // Not raw HTML: a dynamic computed key, a stream write, reading innerHTML (also by
 // destructuring and by iterating), other attributes and values, a sink name in a type, a
@@ -64,4 +77,7 @@ export const online = (node: HTMLElement): void => { node.setAttribute('data-sta
 export const characters = (node: HTMLElement): string[] => { const out: string[] = []; for (const ch of node.innerHTML) out.push(ch); return out; };
 export const pageUrl = (path: string): string => `https://example.com/${path}`;
 export const division = (): HTMLDivElement => document.createElement('div');
+export const templateDivision = (): HTMLElement => document.createElement(`div`);
 export const ExternalScript = () => <Script src="/analytics.js" />;
+export const describedScript = 'scripts'; // a longer word, not the element name
+export type Tag = 'script'; // a type, not a value

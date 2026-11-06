@@ -11,14 +11,17 @@ services:
     # --config pins the rules and --ignore-gitleaks-allow disables inline allow comments, so
     # the scanned code cannot relax the scan (ADR 0016). gitleaks' default `git log` options
     # skip merge diffs and type changes (a symlink turned into a file); `-m` and a
-    # --diff-filter without `t` scan both. gitleaks splits --log-opts on spaces.
+    # --diff-filter without `t` scan both. `--no-renames` pairs changes as
+    # scripts/check-scan-coverage.ts does: with rename detection, text renamed from an image
+    # diffs as binary and is never read (security review round 9, Q1). gitleaks splits
+    # --log-opts on spaces.
     working_dir: /repo
     volumes:
       - ../..:/repo:ro
     command:
       - git
       - /repo
-      - --log-opts=--full-history --all -m --diff-filter=uxdb
+      - --log-opts=--full-history --all -m --no-renames --diff-filter=uxdb
       - --config
       - /repo/.github/ci-tools/gitleaks.toml
       - --ignore-gitleaks-allow

@@ -84,8 +84,9 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
 - **Code execution and markup:** `eval`, `new Function`, `javascript:` URLs (plain strings, and
   templates built with expressions) and raw HTML are banned in every source file. For raw HTML
   that means:
-  - `dangerouslySetInnerHTML` and `srcDoc` as a JSX prop, and any object key naming a sink
-    (`createElement` props, spreads, `Object.assign(node, { innerHTML })`);
+  - `dangerouslySetInnerHTML` and `srcDoc` as a JSX prop, on any element (react/no-danger sees
+    DOM elements only; components such as next/script's `<Script>` are covered too), and any
+    object key naming a sink (`createElement` props, spreads, `Object.assign(node, { innerHTML })`);
   - any string or static template that is exactly a sink's name, outside type positions: string
     keys, computed members, `Reflect.set`, `setAttribute('srcdoc')`, a name kept in a variable;
   - writing `innerHTML`, `outerHTML` or `srcdoc`: by assignment, also through `as`, `satisfies`
@@ -98,15 +99,21 @@ Date`) and argument-less Intl `format()`. The clock and randomness are passed in
     `.bind`, or destructured), and `write`/`writeln` on `document` or on a `.document` or
     `.contentDocument`;
   - a JSX `<script>` or `<style>` child expression, which React writes out as it is, and a
-    `<Script>` child from `next/script`, which Next.js runs as an inline script;
-  - a script element made in code (`document.createElement('script')`, React's
-    `createElement('script', …)`), whose text or `src` is set next.
+    `<Script>` child from `next/script`, which Next.js runs as an inline script; `next/script`
+    may be imported only as `Script` (the JSX selector knows it by that name), and `Script`
+    may not be passed to `createElement` or the JSX runtime (`jsx`, `jsxs`, `jsxDEV`);
+  - the string `script`, as a literal or a static template, outside type positions, so no
+    script element is made in code, whose text or `src` is set next: whether the name reaches
+    `document.createElement` or React's `createElement` directly, through a variable, a
+    computed callee, `.call`, an aliased `createElement` or `jsx('script', …)` (security and
+    code reviews round 9).
 
   The selectors live in `eslint/unsafe-syntax.mjs`, so the list can grow without crowding the
   configuration.
 
-  Semgrep catches some of these too, but only in CI. A JSON-LD script tag will need a
-  `react/no-danger` override with an ADR link.
+  Semgrep catches some of these too, but only in CI. A JSON-LD script tag will need an
+  override with an ADR link for both `react/no-danger` and the `dangerouslySetInnerHTML`
+  attribute selector, scoped to the one file that renders it.
 
 - **Size and types:** `max-lines-per-function: 40`, `max-lines: 300`, no `any`, no `@ts-ignore`.
 - **Commit messages:** commitlint with config-conventional, on every commit CI sees

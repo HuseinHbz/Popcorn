@@ -125,11 +125,13 @@ jobs:
           echo "$output"
           grep -qE '^Checked [1-9][0-9]* paths' <<<"$output"
       # git log takes attributes from the working tree for every commit, so a `-diff` or `binary`
-      # line in a .gitattributes would hide that path from the whole history scan, an
-      # `export-ignore` line would drop it from the tree scan below, and `working-tree-encoding`
-      # would export it as UTF-16, which gitleaks cannot match. This file outranks every
-      # .gitattributes; fonts stay binary by content (and by the check above).
-      - run: printf '* !diff\n* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
+      # line in a .gitattributes would hide that path from the whole history scan. `git archive`
+      # applies the rest when it exports the tree below: `export-ignore` drops a file,
+      # `export-subst` and `ident` rewrite its bytes (a NUL makes it binary, a `$Id$` keyword
+      # hides what it held), and `filter`, `text`, `eol`, `crlf` and `working-tree-encoding`
+      # convert it (UTF-16 is unreadable to gitleaks). This file outranks every .gitattributes,
+      # and the tree step checks that the scanned blobs are HEAD's. Fonts stay binary by content.
+      - run: printf '* !diff\n* !export-ignore\n* !export-subst\n* !ident\n* !filter\n* !text\n* !eol\n* !crlf\n* !working-tree-encoding\n' > .git/info/attributes
       - name: Scan full history
         run: docker compose -f .github/ci-tools/compose.yaml run --rm gitleaks
       # The tree at HEAD is scanned too, with no exceptions, so neither an exception nor a
@@ -154,12 +156,22 @@ jobs:
           # Scanned as a one-commit repository, not as a directory: directory mode skips files
           # with archive-like names (`menu.brand.ts`), text sniffed as an application format
           # (`%PDF`, `SQLite`), everything under a directory with a skipped name, and matches
-          # across its chunk boundaries; git mode reads every text file whole. The attributes
-          # keep an exported .gitattributes from hiding or re-encoding a file.
+          # across its chunk boundaries; git mode reads every text file whole. `git add` would
+          # apply the exported .gitattributes again (a conversion, an `ident` keyword collapsed
+          # to `$Id$`), so these unset them.
           git -C "$tree" init -q
-          printf '* !diff\n* !working-tree-encoding\n* !filter\n* !text\n' > "$tree/.git/info/attributes"
+          printf '* !diff\n* !working-tree-encoding\n* !filter\n* !text\n* !eol\n* !crlf\n* !ident\n' > "$tree/.git/info/attributes"
           git -C "$tree" add -A --force
           git -C "$tree" -c user.name=ci -c user.email=ci@example.invalid commit -qm tree
+          # The scan repository must hold the committed bytes: the same paths, modes and blob
+          # ids as HEAD, apart from the removed exceptions file and the canary.
+          committed=$(git ls-tree -r HEAD | grep -v $'\t.gitleaksignore$')
+          scanned=$(git -C "$tree" ls-tree -r HEAD | grep -v $'\t.ci-canary$')
+          if [ "$committed" != "$scanned" ]; then
+            echo '::error::the exported tree differs from HEAD:'
+            diff <(echo "$committed") <(echo "$scanned") || true
+            exit 1
+          fi
           docker compose -f .github/ci-tools/compose.yaml run --rm \
             -v "$tree:/tree:ro" -v "$report:/report" gitleaks-tree && exit 1
           jq -e 'length > 0 and all(.[]; .File == ".ci-canary")' "$report/tree.json"
@@ -187,7 +199,7 @@ jobs:
         run: |
           tree=$RUNNER_TEMP/tree report=$RUNNER_TEMP/report
           mkdir "$tree" "$report"
-          printf '* !export-ignore\n* !working-tree-encoding\n' > .git/info/attributes
+          printf '* !export-ignore\n* !export-subst\n* !ident\n* !filter\n* !text\n* !eol\n* !crlf\n* !working-tree-encoding\n' > .git/info/attributes
           git archive HEAD | tar -x -C "$tree"
           cp .github/ci-tools/semgrepignore "$tree/.semgrepignore"
           docker compose -f .github/ci-tools/compose.yaml run --rm \

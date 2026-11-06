@@ -59,7 +59,9 @@ Constraints:
   - Semgrep (TypeScript, React, Next.js and secrets packs) and gitleaks run on every push.
   - gitleaks scans twice:
     - the full history, read-only, including merge diffs and type changes (`-m`, and a
-      `--diff-filter` without `t`); the `.gitleaksignore` exceptions apply here;
+      `--diff-filter` without `t`), without rename detection (`--no-renames`), so a change is
+      paired with its own path's previous blob as the coverage check below pairs it; the
+      `.gitleaksignore` exceptions apply here;
     - the tree exported from HEAD, with no exceptions, so neither an exception nor the new
       commit ids of a squash or rebase merge can leave a secret-like value in the tree. The
       exported `.gitleaksignore` is removed before the scan, and the tree may hold no symbolic
@@ -67,9 +69,11 @@ Constraints:
       committed as a one-commit repository and scanned in git mode, which reads every text file
       whole: directory mode skips files with archive-like names, text it sniffs as an
       application format, everything under a directory with a skipped name, and matches across
-      its chunk boundaries. Its rules are read from inside the tree, and a canary token
-      generated at run time must be its only finding, so a missing or empty tree, or rules that
-      match nothing, fail the step.
+      its chunk boundaries. The scan repository must hold exactly HEAD's paths, modes and blob
+      ids (apart from the removed exceptions file and the canary), so no attribute can rewrite
+      what is scanned. Its rules are read from inside the tree, and a canary token generated at
+      run time must be its only finding, so a missing or empty tree, or rules that match
+      nothing, fail the step.
   - Semgrep scans the same exported tree with a pinned ignore file
     (`.github/ci-tools/semgrepignore`, only `tests/fixtures/`) in place of its built-in list,
     which skipped every `tests/`, `build/`, `dist/` and `vendor/` directory. It reads files of
@@ -80,9 +84,14 @@ Constraints:
     - gitleaks runs with a pinned configuration (`.github/ci-tools/gitleaks.toml`, the built-in
       rules only) and ignores inline allow comments (`--ignore-gitleaks-allow`);
     - Semgrep ignores inline suppression markers (`--disable-nosem`);
-    - `.git/info/attributes` (`* !diff`, `* !export-ignore`, `* !working-tree-encoding`)
-      outranks every `.gitattributes`, so no line there can hide a file from either scan or
-      export it as UTF-16;
+    - `.git/info/attributes` outranks every `.gitattributes`. It unsets `diff`, so no path is
+      hidden from the history scan, and every attribute `git archive` or `git add` applies to
+      the exported tree: `export-ignore`, `export-subst` and `ident` (which drop a file, or
+      rewrite it to binary or to a `$Id$` keyword), and `filter`, `text`, `eol`, `crlf` and
+      `working-tree-encoding` (conversions; UTF-16 is unreadable to gitleaks). The scan
+      repository unsets the check-in ones again, and Semgrep's export the same list. With the
+      blob-identity check above, no line in a `.gitattributes` can hide or rewrite a file in
+      either scan (security review round 9, Q1 and Q2);
     - `scripts/check-scan-coverage.ts` reads every blob any commit on any ref ever added, under
       every path, merges included, with names as they are (non-ASCII and quoted ones too).
       Binary content (a UTF-16 text file is binary to git, and gitleaks cannot read it) must be
@@ -90,7 +99,9 @@ Constraints:
       signature. Text written over binary content at the same path fails too, because git
       diffs the pair as binary. A text file on gitleaks' built-in path allowlist (an `.svg`, a
       `.pdf`, a file named `gitleaks.toml`, `node_modules/`, …) must be one of three expected
-      files (the pinned configuration, `pnpm-lock.yaml`, `src/app/icon.svg`); names are matched
+      files (the pinned configuration, `pnpm-lock.yaml`, `src/app/icon.svg`), or one of the
+      three traced brand marks in `docs/brand/traced/`, each accepted only as a path-only mark by
+      the allowlist the logo pipeline also uses (`src/modules/brand/domain/mark.ts`); names are matched
       as gitleaks' Go patterns match them, Unicode case folding included. The allowlist is
       copied from the pinned gitleaks version, and a test fails when the versions differ. CI
       requires the script's summary line, so a run that skipped it fails;
