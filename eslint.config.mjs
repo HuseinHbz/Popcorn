@@ -246,7 +246,8 @@ export default defineConfig([
       '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       // No code execution from strings and no unescaped markup (security review F8).
-      // A JSON-LD script tag will need a react/no-danger override with an ADR link.
+      // A JSON-LD script tag will need an override with an ADR link, for react/no-danger and
+      // for the dangerouslySetInnerHTML selector in eslint/unsafe-syntax.mjs.
       'no-eval': 'error',
       'no-new-func': 'error',
       'no-script-url': 'error',
