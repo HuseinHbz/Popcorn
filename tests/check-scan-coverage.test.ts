@@ -14,6 +14,8 @@ const OLD = '0'.repeat(40);
 const A = 'a'.repeat(40);
 const B = 'b'.repeat(40);
 const C = 'c'.repeat(40);
+const D = 'd'.repeat(40);
+const E = 'e'.repeat(40);
 const raw = (mode: string, blob: string, status: string, path: string): string =>
   `:100644 ${mode} ${OLD} ${blob} ${status}\0${path}\0`;
 
@@ -113,6 +115,36 @@ describe('problems', () => {
   ]);
   const check = (blob: string, path: string): string[] =>
     problems([{ blob, path }], contents, skipped);
+
+  const mark = Buffer.from(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2" fill="currentColor" fill-rule="evenodd"><path d="M0 0L2 2Z"/></svg>',
+  );
+  const titled = Buffer.from(mark.toString().replace('<path', '<title>Nakaya</title><path'));
+  const marks = new Map([
+    [A, text],
+    [D, mark],
+    [E, titled],
+  ]);
+  const checkMark = (blob: string, path: string): string[] =>
+    problems([{ blob, path }], marks, skipped);
+
+  it('accepts the three traced brand marks only at their paths and only when path-only', () => {
+    expect(checkMark(D, 'docs/brand/traced/nakaya-mark.svg')).toEqual([]);
+    expect(checkMark(D, 'docs/brand/traced/em-cafe-mark.svg')).toEqual([]);
+    expect(checkMark(D, 'docs/brand/traced/izakaya-mark.svg')).toEqual([]);
+    expect(checkMark(E, 'docs/brand/traced/nakaya-mark.svg')).toEqual([
+      'docs/brand/traced/nakaya-mark.svg: not a path-only brand mark (unexpected element <title> in <svg>)',
+    ]);
+    expect(checkMark(A, 'docs/brand/traced/nakaya-mark.svg')).toEqual([
+      'docs/brand/traced/nakaya-mark.svg: not a path-only brand mark (not exactly one <svg> element, with double-quoted attributes and nothing around it)',
+    ]);
+    expect(checkMark(D, 'docs/brand/traced/other-mark.svg')).toEqual([
+      'docs/brand/traced/other-mark.svg: a text file that gitleaks skips by its name',
+    ]);
+    expect(checkMark(D, 'public/brand/nakaya-mark.svg')).toEqual([
+      'public/brand/nakaya-mark.svg: a text file that gitleaks skips by its name',
+    ]);
+  });
 
   it('accepts ordinary text, expected skipped files and real fonts', () => {
     expect(check(A, 'src/a.ts')).toEqual([]);

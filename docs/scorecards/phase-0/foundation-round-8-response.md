@@ -50,3 +50,17 @@ unreachable `?? routing.defaultLocale` fallback (harmless).
 
 Note for the code reviewer, acted on: `--diff-merges=separate` makes the parser independent of a
 runner's `log.diffMerges` (`9ac9fb1`).
+
+## Corrections after round 9
+
+Two rows above claimed more than the checks enforced, as the round-9 reviews showed:
+
+- P1 row: the coverage check pairs a change with its own path's previous blob, but the history
+  scan detected renames, so text renamed from an accepted image was diffed as binary and read
+  by neither (code review T17, security review Q1). Fixed in `b4064cf`: the history scan runs
+  with `--no-renames`.
+- T16 and P2 rows: git mode closed directory mode's skips, but `export-subst` and `ident` still
+  rewrote the export, and the scan repository's conversions changed two fonts' bytes, so the
+  scanned tree was not exactly HEAD's (code review T18, security review Q2). Fixed in
+  `41a7503`: every such attribute is unset on both sides, and the tree step fails unless the
+  scanned blob ids are HEAD's.

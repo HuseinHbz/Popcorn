@@ -40,10 +40,20 @@ export const UNSAFE_SYNTAX = rules('No raw HTML: render React elements instead.'
   `CallExpression[callee.property.name=/^(?:setAttribute|createAttribute)$/] > ${HANDLER_NAME}.arguments:first-child`,
   `CallExpression[callee.property.name=/^(?:setAttributeNS|createAttributeNS)$/] > ${HANDLER_NAME}.arguments:nth-child(2)`,
   // Script and style bodies from an expression: React writes them out as they are, and
-  // next/script's <Script> runs its children as an inline script. A script element made in
-  // code (document.createElement, React's createElement) gets its code or src set next.
+  // next/script's <Script> runs its children as an inline script.
   'JSXElement[openingElement.name.name=/^(?:script|style|Script)$/] > JSXExpressionContainer',
-  "CallExpression:matches([callee.name='createElement'], [callee.property.name=/^createElement(?:NS)?$/]) > Literal.arguments[value=/^script$/i]",
+  // dangerouslySetInnerHTML on any element: react/no-danger sees DOM elements only, and
+  // next/script documents <Script dangerouslySetInnerHTML> as its second inline form.
+  "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+  // next/script only as Script, which the JSX selector above knows by name; and Script passed
+  // to createElement or the JSX runtime. (Security review round 9, Q3; code review round 9.)
+  "ImportDeclaration[source.value='next/script'] > :matches(ImportNamespaceSpecifier, ImportDefaultSpecifier[local.name!='Script'], ImportSpecifier)",
+  "CallExpression:matches([callee.name=/^(?:createElement|jsxs?|jsxDEV)$/], [callee.property.name=/^(?:createElement|jsxs?|jsxDEV)$/]) > Identifier.arguments:first-child[name='Script']",
+  // The string script, outside type positions: a script element made in code gets its code or
+  // src set next, whether the name reaches createElement directly, through a template, a
+  // variable, a computed callee, .call, an aliased createElement or the JSX runtime.
+  'Literal:not(TSLiteralType > Literal)[value=/^script$/i]',
+  'TemplateLiteral[expressions.length=0] > TemplateElement[value.raw=/^script$/i]',
   // A javascript: URL built from a template (no-script-url sees only plain strings).
   'TemplateLiteral[expressions.length>0] > TemplateElement:first-child[value.raw=/^\\s*javascript:/i]',
   // document.write and writeln, on this page's document or another one.
