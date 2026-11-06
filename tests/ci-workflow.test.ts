@@ -15,8 +15,10 @@ describe('.github/workflows/ci.yml', () => {
   });
 
   it('lints the pushed range on main and the whole branch elsewhere', () => {
-    expect(workflow).toContain('pnpm exec commitlint --from origin/main --to HEAD');
-    expect(workflow).toContain('pnpm exec commitlint --from "${BEFORE}" --to HEAD');
+    expect(workflow).toContain('node scripts/lint-commits.ts origin/main HEAD');
+    expect(workflow).toContain('node scripts/lint-commits.ts "${BEFORE}" HEAD');
+    expect(workflow).toContain('ACTOR: ${{ github.actor }}');
+    expect(workflow).not.toContain('pnpm exec commitlint');
   });
 
   // Security review round 9, Q2: `git archive` and `git add` apply these attributes, and each
