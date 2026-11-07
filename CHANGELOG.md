@@ -26,6 +26,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 - ADR 0019 amended for the owner decisions of 2026-11-04 and 2026-11-05: a `default_theme` per identity, neutral form-control borders, a 4.5:1 floor, a per-identity stylesheet instead of an inline nonce style, and one path-only SVG mark per identity.
 - `gamutMap` and `oklchToRgb8` throw for a NaN or infinite OKLCH lightness instead of returning black (#18).
+- SeaweedFS 4.52 for local development and CI. ADR 0013 now points to `docker-compose.dev.yml` for the version instead of naming one.
 - The scan-coverage check accepts the three traced brand marks in `docs/brand/traced/` (skipped by gitleaks as `.svg` files) only at their exact paths and only as path-only marks, by the shared allowlist in `src/modules/brand/domain/mark.ts` that the logo pipeline reuses; the risk register records the exception.
 - CI lints each commit with `scripts/lint-commits.ts`: commits Dependabot made (by the run's actor or the commit's author, and the message's shape) are linted without `subject-case`, which their capitalised "Bump" failed on every Dependabot PR; every other rule still applies, and a human commit with a forged Dependabot message is linted in full.
 - Dependabot no longer proposes major versions of Node, `@types/node`, PostgreSQL or Redis; those are upgraded only by a deliberate PR with an ADR, and the PostgreSQL 18 upgrade path is a risk-register item for Phase 5.
