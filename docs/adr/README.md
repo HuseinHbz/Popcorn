@@ -20,6 +20,7 @@
 | [0016](0016-supply-chain-controls.md)    | Supply-chain controls for dependencies, CI and images                   | Proposed | 98 (round 9)  |
 | [0017](0017-font-delivery.md)            | Font delivery — vendored static subsets, no metric fallback, Peyda slot | Proposed | 100 (round 9) |
 | [0018](0018-not-found-handling.md)       | Not-found handling — one server-rendered 404 that is never cached       | Proposed | 100 (round 9) |
+| [0019](0019-runtime-brand-identity.md)   | Runtime brand identity — logos and brand colours set in the admin panel | Proposed | not reviewed  |
 
 An ADR below 98 stays `Proposed` until a review scores it at 98 or more; the review lists the points
 it lost. "Revisit when" lists the events that would reopen the decision. Scores are from the latest

@@ -6,6 +6,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 ### Added
 
+- `src/modules/brand/domain`: pure colour science for the runtime brand theme (ADR 0019): strict `#rrggbb` parsing, sRGB ↔ OKLCH with chroma-only gamut mapping, the WCAG contrast ratio (unrounded comparisons, ratios floored in messages) and the brand and identity catalogue, at 100% coverage enforced per path. Brand-domain tests may hold hex literals (an ESLint override, ADR 0015); lint fixtures are no longer collected by Vitest.
+- ADR 0019 (Proposed): logos and each brand's light- and dark-theme accent colours are set at runtime in the admin with a server-side contrast check; neutrals, type, spacing and motion stay in code. Current Nakaya, Izakaya and em. café logos added for reference in `docs/brand/source/` (all monochrome). Phase 1 unblocked; PR 1.1 rescoped and PR 3.6 (brand settings) added.
 - Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, one localized, accessible 404 for every unknown path, rendered on the server (complete without JavaScript) and never cached (`global-not-found.tsx`, ADR 0018).
 - Module skeleton for the ten plan modules (`domain`, `server`, `ui` entries) and `shared/auth`; `pnpm verify` (lint, format, typecheck, tests with coverage, build).
 - `src/shared/config/env.ts`: Zod-validated environment; the server refuses to start on an invalid env and never prints values; `APP_ENV` is required, and production rejects placeholders in their common spellings (also percent-encoded once), short or repetitive service passwords and S3 secrets, and plain http to a remote S3 endpoint.

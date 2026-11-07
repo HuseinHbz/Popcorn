@@ -16,7 +16,7 @@ Next.js App Router · TypeScript strict · Tailwind · Drizzle · PostgreSQL · 
 - Booking requires a registered customer with personal info; deposit is toggleable per branch; SMS confirmation always.
 - Payment PSP: Saman Kish (SEP) behind `PaymentGateway` adapter; built in phase 04 (booking deposits), reused in phase 06.
 - Sync: Sepidz (web ordering) and Rahkaran (finance) via separate adapters + outbox. Source of truth TBD — do not build sync before ADR 0011 is accepted.
-- Existing logos/brand identities are kept. Headline font: Peyda (licensed); body: Vazirmatn; Latin display: Shippori Mincho. All self-hosted.
+- Existing logos are kept; all three are monochrome (`docs/brand/source/`), so no colour is derived from them. Logos and each brand's `accent_light`/`accent_dark` are editable at runtime in the admin with a server-side contrast check (ADR 0019); neutrals, type, spacing and motion stay in code. Headline font: Peyda (licensed); body: Vazirmatn; Latin display: Shippori Mincho. All self-hosted.
 
 ## Non-negotiables
 
