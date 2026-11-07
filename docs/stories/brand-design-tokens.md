@@ -30,7 +30,7 @@ so that the components in PR 1.2–1.4 use semantic names only, every public pag
   - Motion: easing `cubic-bezier(0.22, 1, 0.36, 1)`; fade 400 ms, reveal 600 ms, 0 ms under reduced motion; hover and pressed colour changes instant (OQ2).
   - z-index: named layers 0, 10, 20, 30, 40, 50, 60.
   - Grid: gutter 24 px; margins 24 px (mobile), 48 px (from `md`) and 96 px (from `lg`, 1280 px). The plan does not set the `md` width.
-  - Accent derivation (OKLCH lightness): hover ±0.06 and pressed ±0.12, away from the theme background; subtle = theme background ±0.04/0.06 with chroma ≤ 0.03.
+  - Accent derivation (OKLCH lightness): hover ±0.06 and pressed ±0.12, away from the theme background; subtle = the theme background moved the same way, by 0.04 on light and 0.06 on dark, with chroma ≤ 0.03.
   - Every identity's `accent_light` shu `#A8322A` and `accent_dark` kin `#B8A07A` (ADR 0019 §8), and every mark.
 
 ## Acceptance criteria

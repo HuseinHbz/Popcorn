@@ -12,10 +12,11 @@
   - `src/shared/ui/tokens.json`: پالت خنثی (ink، washi، stone، ash)، رنگ‌های وضعیت، type scale، spacing مضرب ۸، radius، motion؛ نام‌های معنایی برند (`accent`، `accent-hover`، `on-accent`، …)
   - پیش‌فرض‌های **موقت** برند: `accent_light` = shu و `accent_dark` = kin با برچسب `provisional`؛ لوگوها تک‌رنگ هستند و رنگی از آن‌ها استخراج نمی‌شود
   - `src/modules/brand/domain`: تابع خالص ساخت رنگ‌های مشتق در OKLCH و تابع کنتراست WCAG، با پوشش ۱۰۰٪؛ همین تابع بعداً ذخیره در ادمین را کنترل می‌کند
-  - تزریق CSS variables هر برند در layout سمت سرور با nonce در CSP؛ بدون fetch سمت کلاینت و بدون چشمک رنگ پیش‌فرض
+  - هر هویت (گروه و سه برند) تم پیش‌فرض خودش را دارد (`default_theme`) که layout ریشه در زمان build روی `data-theme` می‌گذارد؛ رنگ‌های accent از stylesheet ایستای `/theme/<identity>.css` می‌آیند، بدون `<style>` درون‌خطی و بدون nonce؛ بدون fetch سمت کلاینت و بدون چشمک رنگ پیش‌فرض
   - تبدیل خودکار توکن‌ها به CSS variables و Tailwind theme
-  - تست کنتراست: هر جفت متن/پس‌زمینه ≥ ۴.۵:۱، `accent_light` روی washi و `accent_dark` روی ink ≥ ۳:۱، on-accent روی هر accent ≥ ۴.۵:۱
-  - کامپوننت `BrandLogo` با نسخه روشن و تیره؛ فعلاً از فایل‌های `docs/brand/source/` (کپی بهینه در `public/brand/`)
+  - تست کنتراست: هر جفت متن/پس‌زمینه ≥ ۴.۵:۱؛ `accent_light` روی washi و `accent_dark` روی ink، همراه رنگ‌های hover و pressed آن‌ها، ≥ ۴.۵:۱ تا accent بتواند رنگ لینک باشد؛ on-accent روی هر سه ≥ ۴.۵:۱؛ حاشیه کنترل‌های فرم خنثی است (stone روی تم روشن، ash روی تم تیره) و هرگز kin نیست
+  - کامپوننت `BrandLogo`: برای هر برند یک نشان SVG ردیابی‌شده (`docs/brand/traced/`) که درون‌خطی و با رنگ متن تم کشیده می‌شود و برای هر دو تم کار می‌کند؛ بدون نسخه رستری
+  - تحویل در پنج زیر-PR: 1.1a علم رنگ، 1.1b بررسی accent، 1.1c توکن‌ها، 1.1d تحویل برند، 1.1e لوگوها؛ PR 1.1 فقط بعد از تأیید 1.1e تیک می‌خورد
 - [ ] **PR 1.2 — Storybook و Primitiveها**
   - Storybook با addon a11y و حالت RTL/LTR و light/dark
   - Button، IconButton، Link، Input، Textarea، Select، Checkbox، Radio، Switch، Dialog، Sheet، Toast، Tabs، Badge، Skeleton، Tooltip (بر پایه Radix)

@@ -22,9 +22,9 @@
   - ISR + `revalidateTag` روی تغییرات ادمین، metadata دوزبانه
 
 - [ ] **PR 3.6 — تنظیمات برند در ادمین (ADR 0019)**
-  - جدول `brand_settings` (`logo_on_light` و `logo_on_dark`، favicon، og_image، `accent_light`، `accent_dark`، نسخه‌ها) و مجوز `brand:update`
-  - آپلود SVG، PNG یا WebP با بررسی MIME واقعی، حداقل ۵۱۲px برای رستری، پاک‌سازی SVG سمت سرور و سرو با CSP `default-src 'none'`
-  - انتخاب رنگ با کنترل کنتراست سمت سرور: ذخیره رنگ ناموفق رد می‌شود و نسبت اندازه‌گیری‌شده و نزدیک‌ترین روشنایی قابل قبول نمایش داده می‌شود
+  - جدول `brand_settings` (`default_theme`، `logo`، favicon، og_image، `accent_light`، `accent_dark`، نسخه‌ها) و مجوز `brand:update`؛ `getIdentitySettings` به‌جای پیش‌فرض‌های کد از این جدول می‌خواند
+  - لوگو: یک نشان SVG که از allowlist مسیر-فقط (`parseMark`) عبور کند و درون‌خطی رندر شود؛ آپلودها با بررسی MIME واقعی و سقف حجم؛ حداقل ۵۱۲px فقط برای فایل‌های رستری
+  - انتخاب رنگ با کنترل کنتراست سمت سرور (`checkAccentFor`، همان بررسی‌ای که stylesheet را می‌سازد): ذخیره رنگ ناموفق رد می‌شود و نسبت اندازه‌گیری‌شده و نزدیک‌ترین روشنایی قابل قبول نمایش داده می‌شود
   - پیش‌نمایش قبل از انتشار، تاریخچه نسخه‌ها با برگشت یک‌کلیکی، Audit log، و `revalidateTag('brand:<slug>')`
 
 ## Blocked

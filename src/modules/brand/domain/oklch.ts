@@ -94,8 +94,14 @@ export function inGamut(linear: LinearRgb, epsilon: number): boolean {
  * Brings a colour into the sRGB gamut by lowering chroma only (bisection), keeping hue and the
  * lightness clamped to 0–1. An in-gamut colour is returned with its chroma unchanged; a negative
  * chroma is read as 0, and a chroma with no in-gamut value found (NaN, infinite) falls to grey.
+ * A lightness that is not a finite number throws a RangeError: clamped, NaN would become black,
+ * which passes a contrast check on a light background, so a bug upstream would ship a wrong
+ * colour instead of failing.
  */
 export function gamutMap(lch: Oklch): Oklch {
+  if (!Number.isFinite(lch.l)) {
+    throw new RangeError(`OKLCH lightness must be a finite number, got ${String(lch.l)}`);
+  }
   const l = Math.min(1, Math.max(0, lch.l));
   const { h } = lch;
   const fits = (c: number): boolean => inGamut(oklchToLinear({ l, c, h }), GAMUT_EPSILON);

@@ -211,7 +211,12 @@ describe('oklchToRgb8', () => {
     expect(oklchToRgb8({ l: -0.5, c: 0, h: 0 })).toEqual({ r: 0, g: 0, b: 0 });
   });
 
-  it('returns valid bytes even for NaN lightness', () => {
-    expect(oklchToRgb8({ l: Number.NaN, c: 0.1, h: 30 })).toEqual({ r: 0, g: 0, b: 0 });
-  });
+  // A NaN lightness used to become black, which passes contrast on washi (issue #18).
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'throws for lightness %s instead of returning a colour',
+    (l) => {
+      expect(() => oklchToRgb8({ l, c: 0.1, h: 30 })).toThrow(RangeError);
+      expect(() => gamutMap({ l, c: 0, h: 0 })).toThrow('OKLCH lightness must be a finite number');
+    },
+  );
 });
