@@ -7,6 +7,7 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 ### Added
 
 - `src/modules/brand/domain`: pure colour science for the runtime brand theme (ADR 0019): strict `#rrggbb` parsing, sRGB ↔ OKLCH with chroma-only gamut mapping, the WCAG contrast ratio (unrounded comparisons, ratios floored in messages) and the brand and identity catalogue, at 100% coverage enforced per path. Brand-domain tests may hold hex literals (an ESLint override, ADR 0015); lint fixtures are no longer collected by Vitest.
+- The accent family and its check (ADR 0019, PR 1.1b): `deriveAccentFamily` derives hover, pressed, subtle and on-accent in OKLCH from one accent and a theme context; `checkAccent` returns `invalid`, `rejected` (each failing rule, measured and required ratio, and the nearest passing colour at the same hue and chroma) or `accepted`, with every rule at 4.5:1. The neutrals and derivation steps come in through the context, so tokens.json stays their only source.
 - ADR 0019 (Proposed): logos and each brand's light- and dark-theme accent colours are set at runtime in the admin with a server-side contrast check; neutrals, type, spacing and motion stay in code. Current Nakaya, Izakaya and em. café logos added for reference in `docs/brand/source/` (all monochrome). Phase 1 unblocked; PR 1.1 rescoped and PR 3.6 (brand settings) added.
 - Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, one localized, accessible 404 for every unknown path, rendered on the server (complete without JavaScript) and never cached (`global-not-found.tsx`, ADR 0018).
 - Module skeleton for the ten plan modules (`domain`, `server`, `ui` entries) and `shared/auth`; `pnpm verify` (lint, format, typecheck, tests with coverage, build).
@@ -23,6 +24,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 ### Changed
 
+- ADR 0019 amended for the owner decisions of 2026-11-04 and 2026-11-05: a `default_theme` per identity, neutral form-control borders, a 4.5:1 floor, a per-identity stylesheet instead of an inline nonce style, and one path-only SVG mark per identity.
+- `gamutMap` and `oklchToRgb8` throw for a NaN or infinite OKLCH lightness instead of returning black (#18).
 - The scan-coverage check accepts the three traced brand marks in `docs/brand/traced/` (skipped by gitleaks as `.svg` files) only at their exact paths and only as path-only marks, by the shared allowlist in `src/modules/brand/domain/mark.ts` that the logo pipeline reuses; the risk register records the exception.
 - CI lints each commit with `scripts/lint-commits.ts`: commits Dependabot made (by the run's actor or the commit's author, and the message's shape) are linted without `subject-case`, which their capitalised "Bump" failed on every Dependabot PR; every other rule still applies, and a human commit with a forged Dependabot message is linted in full.
 - Dependabot no longer proposes major versions of Node, `@types/node`, PostgreSQL or Redis; those are upgraded only by a deliberate PR with an ADR, and the PostgreSQL 18 upgrade path is a risk-register item for Phase 5.
