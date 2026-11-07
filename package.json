@@ -19,7 +19,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
-    "lhci": "lhci autorun",
+    "lhci": "node scripts/lighthouse-ci.ts",
     "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test:coverage && pnpm build",
     "prepare": "husky"
   },
