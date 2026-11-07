@@ -46,8 +46,10 @@ The other options were not run, so no figures are claimed for them.
 
 ## Decision
 
-- Local development and CI use **SeaweedFS `chrislusf/seaweedfs:4.51`**, pinned by digest in
-  `docker-compose.dev.yml` and started as `weed mini -dir=/data -bucket=popcorn-media`.
+- Local development and CI use **SeaweedFS (`chrislusf/seaweedfs`)**, started as
+  `weed mini -dir=/data -bucket=popcorn-media`. The version in use is the one pinned by tag and
+  digest in `docker-compose.dev.yml`; this ADR does not repeat it, and Dependabot proposes updates
+  there. (The options table records 4.51, the release evaluated in October 2026.)
 - Only the S3 port is published, on `127.0.0.1:8333`. Credentials come from `.env`.
 - Everything `weed mini` starts besides S3 is turned off where it can be: telemetry
   (`-master.telemetry=false`), WebDAV, the Iceberg and Lance catalogs, and the admin UI. The
