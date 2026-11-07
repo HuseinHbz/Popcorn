@@ -52,11 +52,12 @@ const SIZE_VALUE =
 const COLOR_PROPERTY = `Property${keyMatches(COLOR_KEY)}`;
 const BEARING_PROPERTY = `Property${keyMatches(COLOR_BEARING_KEY)}:not(${keyMatches(COLOR_KEY)})`;
 const SIZE_PROPERTY = `JSXAttribute[name.name='style'] Property${keyMatches(SIZE_KEY)}`;
+const RAW_COLOR_SYNTAX = rules('Use a design token, not a raw colour.', [
+  `Literal[value=${RAW_COLOR}]`,
+  `TemplateElement[value.raw=${RAW_COLOR}]`,
+]);
 const TOKEN_SYNTAX = [
-  ...rules('Use a design token, not a raw colour.', [
-    `Literal[value=${RAW_COLOR}]`,
-    `TemplateElement[value.raw=${RAW_COLOR}]`,
-  ]),
+  ...RAW_COLOR_SYNTAX,
   ...rules('Use a theme token, not a Tailwind arbitrary value.', [
     `Literal[value=${ARBITRARY_VALUE}]`,
     `TemplateElement[value.raw=${ARBITRARY_VALUE}]`,
@@ -302,6 +303,20 @@ export default defineConfig([
           name,
           message: '`domain/` and `shared/lib` must stay pure: no I/O or ambient globals.',
         })),
+      ],
+    },
+  },
+  {
+    // The brand domain checks and derives colours (ADR 0019), so its tests hold colours as data:
+    // only the raw-colour selectors are dropped there, and every other token, i18n and raw-HTML
+    // rule still applies. Brand source files and other modules' tests keep the ban (ADR 0015).
+    files: ['src/modules/brand/**/*.test.ts', 'tests/fixtures/src/modules/brand/**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...TOKEN_SYNTAX.filter((rule) => !RAW_COLOR_SYNTAX.includes(rule)),
+        ...I18N_SYNTAX,
+        ...UNSAFE_SYNTAX,
       ],
     },
   },

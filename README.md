@@ -32,7 +32,7 @@ pnpm's setting) and Docker at a registry mirror (`registry-mirrors` in `/etc/doc
 | `pnpm typecheck`                   | `next typegen` + `tsc --noEmit` (strict, `noUncheckedIndexedAccess`)                                                                                          |
 | `pnpm test` / `pnpm test:coverage` | Vitest: unit tests in `src/`, rule and tooling tests in `tests/`; ≥ 90% coverage on `domain/`, `shared/lib` and `shared/config`                               |
 | `pnpm build && pnpm e2e`           | Production build; Playwright E2E + axe on desktop and mobile, including 404 pages and env validation                                                          |
-| `pnpm lhci`                        | Lighthouse CI (mobile, 7 runs) on `/fa` and `/en`, after `pnpm build`                                                                                         |
+| `pnpm lhci`                        | Lighthouse CI (mobile, 7 runs) on `/fa` and `/en`, after `pnpm build`; one more collection after a runtime error                                              |
 
 | Service    | Address (127.0.0.1 only)                        |
 | ---------- | ----------------------------------------------- |

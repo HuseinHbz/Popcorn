@@ -6,6 +6,8 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 
 ### Added
 
+- `src/modules/brand/domain`: pure colour science for the runtime brand theme (ADR 0019): strict `#rrggbb` parsing, sRGB ↔ OKLCH with chroma-only gamut mapping, the WCAG contrast ratio (unrounded comparisons, ratios floored in messages) and the brand and identity catalogue, at 100% coverage enforced per path. Brand-domain tests may hold hex literals (an ESLint override, ADR 0015); lint fixtures are no longer collected by Vitest.
+- ADR 0019 (Proposed): logos and each brand's light- and dark-theme accent colours are set at runtime in the admin with a server-side contrast check; neutrals, type, spacing and motion stay in code. Current Nakaya, Izakaya and em. café logos added for reference in `docs/brand/source/` (all monochrome). Phase 1 unblocked; PR 1.1 rescoped and PR 3.6 (brand settings) added.
 - Phase 0 foundation: Next.js 16 + strict TypeScript app with next-intl (fa default at `/fa`, en at `/en`), RTL-aware layout, bilingual hello page, one localized, accessible 404 for every unknown path, rendered on the server (complete without JavaScript) and never cached (`global-not-found.tsx`, ADR 0018).
 - Module skeleton for the ten plan modules (`domain`, `server`, `ui` entries) and `shared/auth`; `pnpm verify` (lint, format, typecheck, tests with coverage, build).
 - `src/shared/config/env.ts`: Zod-validated environment; the server refuses to start on an invalid env and never prints values; `APP_ENV` is required, and production rejects placeholders in their common spellings (also percent-encoded once), short or repetitive service passwords and S3 secrets, and plain http to a remote S3 endpoint.
@@ -27,6 +29,9 @@ All notable changes follow [Keep a Changelog](https://keepachangelog.com/) and C
 - ADR 0008: amended by ADR 0013, accepted (MinIO community images are discontinued; local development and CI use SeaweedFS).
 - Merged the maintainer's execution phases (`docs/phases/`, `/phase` and `/review` commands).
 - Rewrote the Phase 0 branch history before the first merge: one concern per commit, the plan's reformat in the `style(docs)` commit, and every commit passing its own secret-scan guard (`docs/scorecards/phase-0/history-rewrite.md`).
+- The Lighthouse summary step says there are no results when Lighthouse CI stopped before writing its manifest, instead of crashing on the missing file; the Lighthouse CI step carries the failure.
+- `pnpm lhci` runs `scripts/lighthouse-ci.ts` instead of `lhci autorun`, with the same steps in the same order. If a run still ends in a Lighthouse runtime error (NO_NAVSTART, NO_FCP or PROTOCOL_TIMEOUT) after lhci's own three tries, collection runs once more, with a `::warning::` annotation and a line in the job summary. Score failures are never retried; a second failure, an upload failure or a step killed by a signal fails the step.
+- The Lighthouse summary also gives each page's median FCP, LCP, TBT and CLS, read from the run reports, in the job summary and in each page's annotation.
 
 ### Earlier
 

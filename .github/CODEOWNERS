@@ -47,6 +47,9 @@
 /src/shared/config/             @HuseinHbz
 /.env.example                   @HuseinHbz
 
+# The contrast check every brand colour passes before it renders or is saved (ADR 0019)
+/src/modules/brand/domain/      @HuseinHbz
+
 # Local services: isolation, loopback ports, the least-privilege database role
 /docker-compose.dev.yml         @HuseinHbz
 /docker/                        @HuseinHbz
